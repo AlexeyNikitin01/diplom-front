@@ -39,10 +39,11 @@ export default defineComponent({
                     login: this.login,
                     password: this.password,
                 });
+
                 if (response.data.data.token) {
                     // Store the token in local storage
                     localStorage.setItem('token', response.data.data.token);
-                    localStorage.setItem('userUUID', response.data.data.userUUID);
+                    localStorage.setItem('userUUID', response.data.data.user_uuid);
                     // Redirect to dashboard
                     this.$router.push('/').then(() => {
                         window.location.reload();
