@@ -79,7 +79,7 @@ export default defineComponent({
     async mounted() {
         try {
             const response = await axios.post('http://localhost:18080/user/get-user', {
-                userUUID: this.userUUID
+                user_uuid: this.userUUID
             }, {
                 headers: {
                     authorization: 'bearer ' + localStorage.getItem("token"),
@@ -94,7 +94,7 @@ export default defineComponent({
     methods: {
         async updateUser() {
             const response = await axios.post('http://localhost:18080/user/update-user', {
-                userUUID: this.userUUID,
+                user_uuid: this.userUUID,
                 login: this.customer.login,
                 name: this.customer.name,
                 surname: this.customer.surname,
