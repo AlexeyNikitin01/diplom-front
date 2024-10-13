@@ -4,6 +4,16 @@
     </h1>
     <div class="w-50 mx-auto">
         <form class="card p-5 bg-light" @submit.prevent="updateUser">
+            <div class="mb-3 text-center">
+                <!-- Показать фотографию, если она загружена -->
+                <img v-if="photoUrl" :src="photoUrl" alt="Фото профиля" class="img-fluid rounded mb-3" style="max-height: 200px;">
+            </div>
+            
+            <div class="mb-3">
+                <label>Загрузить фото:</label>
+                <input class="form-control" type="file" @change="onFileChange" accept="image/*">
+            </div>
+            
             <div class="mb-3">
                 <label>Логин:</label>
                 <input class="form-control" type="text" id="login" v-model="customer.login" required>
@@ -29,13 +39,13 @@
                 <input class="form-control" type="text" v-model="customer.place_work">
             </div>
             <div class="mb-3">
-                <label>Дожность:</label>
+                <label>Должность:</label>
                 <input class="form-control" type="text" v-model="customer.position">
             </div>
-            <button class="btn btn-success" type="submit">сохранить</button>
+            
+            <button class="btn btn-success" type="submit">Сохранить</button>
         </form>
     </div>
-
 </template>
 
 <script lang="ts">
@@ -46,6 +56,8 @@ interface State {
     tokenExist: boolean,
     userUUID: string | null,
     username: string,
+    photoUrl: string,
+    selectedFile: File | null,
     customer: {
         uuid: string
         login: string
@@ -55,6 +67,7 @@ interface State {
         phone: string
         place_work: string
         position: string
+        photo: string
     }
 }
 
@@ -64,6 +77,8 @@ export default defineComponent({
             tokenExist: !localStorage.getItem("token"),
             userUUID: localStorage.getItem("userUUID"),
             username: "",
+            photoUrl: '', // Поле для загрузки фото
+            selectedFile: null,
             customer: {
                 uuid: '',
                 login: '',
@@ -73,7 +88,8 @@ export default defineComponent({
                 phone: '',
                 place_work: '',
                 position: '',
-            }
+                photo: '',
+            },
         };
     },
     async mounted() {
@@ -87,31 +103,79 @@ export default defineComponent({
             });
             this.username = response.data.user.login
             this.customer = response.data.user
+            this.customer.photo = response.data.user.url
         } catch (error) {
             console.error('Error registering user:', error);
         }
+
+        if (this.customer.photo) {
+            this.photoUrl = this.customer.photo;
+        }
     },
     methods: {
+        // Обработка изменения файла
+        onFileChange(event: Event) {
+            const fileInput = event.target as HTMLInputElement;
+            if (fileInput.files && fileInput.files.length > 0) {
+                this.selectedFile = fileInput.files[0];
+                this.previewImage(this.selectedFile);
+            }
+        },
+        
+        // Отправка обновленного профиля
         async updateUser() {
-            const response = await axios.post('http://localhost:18080/user/update-user', {
-                user_uuid: this.userUUID,
-                login: this.customer.login,
-                name: this.customer.name,
-                surname: this.customer.surname,
-                email: this.customer.email,
-                phone: this.customer.phone,
-                place_work: this.customer.place_work,
-                position: this.customer.position,
-            }, {
-                headers: {
-                    authorization: 'bearer ' + localStorage.getItem("token"),
-                },
-            });
-            console.log(response)
-            this.$router.push({
-                path: `/cabinet`
-            })
-        }
+            try {
+                // Обновляем данные пользователя
+                const userResponse = await axios.post('http://localhost:18080/user/update-user', {
+                    user_uuid: this.userUUID,
+                    login: this.customer.login,
+                    name: this.customer.name,
+                    surname: this.customer.surname,
+                    email: this.customer.email,
+                    phone: this.customer.phone,
+                    place_work: this.customer.place_work,
+                    position: this.customer.position,
+                }, {
+                    headers: {
+                        authorization: 'bearer ' + localStorage.getItem("token"),
+                    },
+                });
+
+                // Если выбран файл, загружаем его
+                if (this.selectedFile) {
+                    const formData = new FormData();
+                    formData.append('file', this.selectedFile);
+                    formData.append('user_uuid', this.userUUID!);
+
+                    // Отправляем файл на сервер
+                    const uploadResponse = await axios.post('http://localhost:18080/user/upload-avatar', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            authorization: 'bearer ' + localStorage.getItem("token"),
+                        },
+                    });
+
+                    // Обновляем URL фото на странице
+                    this.photoUrl = uploadResponse.data.url;
+                }
+
+                // Переход в личный кабинет после обновления
+                this.$router.push({
+                    path: `/cabinet`
+                });
+            } catch (error) {
+                console.error('Error updating user:', error);
+            }
+        },
+
+        // Предпросмотр загруженного изображения
+        previewImage(file: File) {
+            const reader = new FileReader();
+            reader.onload = (e: any) => {
+                this.photoUrl = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
     }
 });
 </script>
