@@ -5,15 +5,17 @@
     <div class="w-50 mx-auto">
         <form class="card p-5 bg-light" @submit.prevent="updateUser">
             <div class="mb-3 text-center">
-                <!-- Показать фотографию, если она загружена -->
-                <img v-if="photoUrl" :src="photoUrl" alt="Фото профиля" class="img-fluid rounded mb-3" style="max-height: 200px;">
+                <!-- Показать фотографию, если загружен URL, иначе использовать photo_64 -->
+                <img v-if="photoUrl || customer.photo_64"
+                    :src="photoUrl || `data:image/png;base64,${customer.photo_64}`" alt="Фото профиля"
+                    class="img-fluid rounded mb-3" style="max-height: 200px;">
             </div>
-            
+
             <div class="mb-3">
                 <label>Загрузить фото:</label>
                 <input class="form-control" type="file" @change="onFileChange" accept="image/*">
             </div>
-            
+
             <div class="mb-3">
                 <label>Логин:</label>
                 <input class="form-control" type="text" id="login" v-model="customer.login" required>
@@ -42,7 +44,7 @@
                 <label>Должность:</label>
                 <input class="form-control" type="text" v-model="customer.position">
             </div>
-            
+
             <button class="btn btn-success" type="submit">Сохранить</button>
         </form>
     </div>
@@ -57,6 +59,7 @@ interface State {
     userUUID: string | null,
     username: string,
     photoUrl: string,
+    photo_64: string
     selectedFile: File | null,
     customer: {
         uuid: string
@@ -68,6 +71,7 @@ interface State {
         place_work: string
         position: string
         photo: string
+        photo_64: string
     }
 }
 
@@ -89,7 +93,9 @@ export default defineComponent({
                 place_work: '',
                 position: '',
                 photo: '',
+                photo_64: '',
             },
+            photo_64: ''
         };
     },
     async mounted() {
@@ -104,6 +110,7 @@ export default defineComponent({
             this.username = response.data.user.login
             this.customer = response.data.user
             this.customer.photo = response.data.user.url
+            this.customer.photo_64 = response.data.avatar
         } catch (error) {
             console.error('Error registering user:', error);
         }
@@ -155,8 +162,15 @@ export default defineComponent({
                         },
                     });
 
-                    // Обновляем URL фото на странице
-                    this.photoUrl = uploadResponse.data.url;
+                    if (uploadResponse.data.url !== "") {
+                        // Обновляем URL фото на странице
+                        this.photoUrl = uploadResponse.data.url;
+                    }
+                    
+                    if (uploadResponse.data.img !== "") {
+                        // Обновляем локальное фото на странице
+                        this.photo_64 = uploadResponse.data.img;
+                    }
                 }
 
                 // Переход в личный кабинет после обновления
