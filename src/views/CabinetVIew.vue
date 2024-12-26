@@ -174,9 +174,9 @@ export default defineComponent({
                 }
 
                 // Переход в личный кабинет после обновления
-                this.$router.push({
-                    path: `/cabinet`
-                });
+                this.$router.push('/cabinet').then(() => {
+                    window.location.reload();
+                })
             } catch (error) {
                 console.error('Error updating user:', error);
             }
