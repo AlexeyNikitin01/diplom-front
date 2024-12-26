@@ -47,7 +47,9 @@ export default defineComponent({
                     email: this.email
                 });
                 console.log('User registered successfully!', response.data);
-                
+                this.$router.push('/auth').then(() => {
+                    window.location.reload();
+                })
             } catch (error) {
                 console.error('Error registering user:', error);
             }
