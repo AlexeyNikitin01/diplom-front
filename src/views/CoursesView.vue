@@ -1,6 +1,5 @@
 <template>
     <div class="container">
-      <h1>Курсы</h1>
       <ul class="list-group">
         <li v-for="course in courses" :key="course.id" class="list-group-item">
           <h2>{{ course.name }}</h2>
