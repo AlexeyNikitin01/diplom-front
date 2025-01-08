@@ -1,6 +1,7 @@
 import LoginForm from "@/components/LoginForm.vue";
 import RegisterForm from "@/components/RegisterForm.vue";
 import AboutSite from "@/views/AboutSite.vue";
+import AddCourse from "@/views/AddCourse.vue";
 import CabinetVIew from "@/views/CabinetVIew.vue";
 import CourseBuilder from "@/views/CourseBuilder.vue";
 import CoursesView from "@/views/CoursesView.vue";
@@ -18,7 +19,8 @@ const routes = [
     { path: '/lectures', component: LecturesView, meta: { requiresAuth: true } },
     { path: '/models', component: ModelView, meta: { requiresAuth: true } },
     { path: '/cabinet', component: CabinetVIew, meta: { requiresAuth: true } },
-    { path: '/course-build', component: CourseBuilder, meta: { requiresAuth: false } },
+    { path: '/add-course', component: AddCourse, meta: { requiresAuth: false } },
+    { path: '/course-builder/:id', component: CourseBuilder, meta: { requiresAuth: false } },
 ];
 
 const router = createRouter({
