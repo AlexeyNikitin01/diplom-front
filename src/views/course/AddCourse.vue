@@ -14,6 +14,11 @@
         placeholder="Введите описание курса" rows="5"></textarea>
     </div>
 
+    <div class="form-group mb-3">
+      <label for="courseImage">Загрузить изображение</label>
+      <input id="courseImage" type="file" @change="onFileChange" class="form-control" />
+    </div>
+
     <button @click="createCourse" class="btn btn-primary" :disabled="loading">
       {{ loading ? "Создание..." : "Создать курс" }}
     </button>
@@ -31,25 +36,38 @@ export default {
       name: "",
       description: "",
     });
+    const selectedFile = ref(null); // Хранение выбранного файла
     const loading = ref(false);
     const router = useRouter();
 
+    const onFileChange = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        selectedFile.value = file;
+      }
+    };
+
     const createCourse = async () => {
-      if (!course.name || !course.description) {
-        alert("Пожалуйста, заполните все поля!");
+      if (!course.name || !course.description || !selectedFile.value) {
+        alert("Пожалуйста, заполните все поля и загрузите изображение!");
         return;
       }
 
       try {
         loading.value = true;
 
-        const response = await axios.post("http://localhost:1818/course/add-course", {
-          name: course.name,
-          description: course.description,
+        const formData = new FormData();
+        formData.append("name", course.name);
+        formData.append("description", course.description);
+        formData.append("file", selectedFile.value); // Отправка файла
+
+        const response = await axios.post("http://localhost:1818/course/add-course", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
 
-        const courseId = response.data.course.id;
-
+        const courseId = response.data.course.id; // Предполагаем, что сервер возвращает ID курса
         router.push(`/course-builder/${courseId}`);
       } catch (error) {
         console.error("Ошибка при создании курса:", error);
@@ -61,12 +79,15 @@ export default {
 
     return {
       course,
+      selectedFile,
       loading,
+      onFileChange,
       createCourse,
     };
   },
 };
 </script>
+
 
 <style>
 .container {

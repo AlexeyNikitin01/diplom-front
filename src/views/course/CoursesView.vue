@@ -5,7 +5,7 @@
     <div class="row">
       <div v-for="course in courses" :key="course.id" class="col-md-6 col-lg-4 mb-4">
         <div class="card shadow-sm h-100">
-          <img :src="course.image || 'https://via.placeholder.com/300x200'" class="card-img-top" alt="Course Image" />
+          <img :src="course.photo_url || 'https://via.placeholder.com/300x200'" class="card-img-top" alt="Course Image" />
           <div class="card-body">
             <h5 class="card-title">{{ course.name }}</h5>
             <p class="card-text text-truncate">{{ course.description }}</p>
