@@ -4,6 +4,7 @@ import AboutSite from "@/views/AboutSite.vue";
 import AddCourse from "@/views/course/AddCourse.vue";
 import CabinetVIew from "@/views/CabinetVIew.vue";
 import CourseBuilder from "@/views/course/CourseBuilder.vue";
+import CourseView from "@/views/course/CourseView.vue";
 import CoursesView from "@/views/course/CoursesView.vue";
 import IndexVue from "@/views/IndexVue.vue";
 import LecturesView from "@/views/LecturesView.vue";
@@ -21,6 +22,7 @@ const routes = [
     { path: '/cabinet', component: CabinetVIew, meta: { requiresAuth: true } },
     { path: '/add-course', component: AddCourse, meta: { requiresAuth: false } },
     { path: '/course-builder/:id', component: CourseBuilder, meta: { requiresAuth: false } },
+    { path: '/course-details/:id', component: CourseView, meta: { requiresAuth: false } },
 ];
 
 const router = createRouter({

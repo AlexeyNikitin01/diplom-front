@@ -1,133 +1,187 @@
 <template>
-  <div class="container mt-5">
-    <h3 class="display-4 text-center mb-4">Конструктор курса</h3>
+  <div class="container py-5">
+    <h1 class="text-center mb-4">Редактирование курса</h1>
 
-    <div v-for="(module, moduleIndex) in modules" :key="module.id" class="card mb-4">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <input type="text" v-model="module.title" class="form-control w-75" placeholder="Название модуля" />
-        <button @click="deleteModule(moduleIndex)" class="btn btn-danger">Удалить</button>
-      </div>
-
+    <div v-for="(module, moduleIndex) in modules" :key="moduleIndex" class="card mb-4">
       <div class="card-body">
-        <button @click="addLecture(moduleIndex)" class="btn btn-primary mb-2">Добавить лекцию</button>
-        <button @click="addTest(moduleIndex)" class="btn btn-warning mb-2">Добавить тест</button>
+        <h2 class="card-title">Модуль {{ moduleIndex + 1 }}</h2>
 
-        <!-- Лекции -->
-        <div v-for="(lecture, lectureIndex) in module.lectures" :key="lecture.id" class="mb-3">
-          <input type="text" v-model="lecture.title" class="form-control" placeholder="Название лекции" />
-          <textarea v-model="lecture.text" class="form-control mt-2" placeholder="Содержание лекции"></textarea>
-          <button @click="deleteLecture(moduleIndex, lectureIndex)" class="btn btn-danger mt-2">Удалить лекцию</button>
+        <div class="mb-3">
+          <label for="moduleName" class="form-label">Название модуля:</label>
+          <input type="text" v-model="module.name" id="moduleName" class="form-control" />
         </div>
 
-        <!-- Тесты -->
-        <div v-for="(test, testIndex) in module.tests" :key="test.id" class="mb-3">
-          <input type="text" v-model="test.title" class="form-control" placeholder="Название теста" />
-          <button @click="deleteTest(moduleIndex, testIndex)" class="btn btn-danger mt-2">Удалить тест</button>
+        <div v-for="(lecture, lectureIndex) in module.lectures" :key="lectureIndex" class="mb-4">
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title">Лекция {{ lectureIndex + 1 }}</h3>
+
+              <div class="mb-3">
+                <label for="lectureName" class="form-label">Название лекции:</label>
+                <input type="text" v-model="lecture.name" id="lectureName" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label for="lectureText" class="form-label">Текст лекции:</label>
+                <textarea v-model="lecture.text" id="lectureText" class="form-control" rows="4"></textarea>
+              </div>
+
+              <div v-for="(test, testIndex) in lecture.tests" :key="testIndex" class="mb-4">
+                <div class="card">
+                  <div class="card-body">
+                    <h4 class="card-title">Тест {{ testIndex + 1 }}</h4>
+
+                    <div class="mb-3">
+                      <label for="testName" class="form-label">Название теста:</label>
+                      <input type="text" v-model="test.name" id="testName" class="form-control" />
+                    </div>
+
+                    <div v-for="(question, questionIndex) in test.questions" :key="questionIndex" class="mb-3">
+                      <h5>Вопрос {{ questionIndex + 1 }}</h5>
+
+                      <div class="mb-2">
+                        <label for="questionText" class="form-label">Текст вопроса:</label>
+                        <input type="text" v-model="question.text" id="questionText" class="form-control" />
+                      </div>
+
+                      <div class="form-check">
+                        <input type="checkbox" v-model="question.isCorrect" id="isCorrect" class="form-check-input" />
+                        <label for="isCorrect" class="form-check-label">Правильный ответ</label>
+                      </div>
+                    </div>
+
+                    <button @click="addQuestionToTest(moduleIndex, lectureIndex, testIndex)"
+                      class="btn btn-primary">Добавить вопрос</button>
+                  </div>
+                </div>
+              </div>
+
+              <button @click="addTestToLecture(moduleIndex, lectureIndex)" class="btn btn-secondary">Добавить
+                тест</button>
+            </div>
+          </div>
         </div>
+
+        <button @click="addLectureToModule(moduleIndex)" class="btn btn-info">Добавить лекцию</button>
       </div>
     </div>
 
-    <button @click="addModule" class="btn btn-success mb-4">Добавить модуль</button>
-
-    <div class="text-center">
-      <button @click="saveCourse" class="btn btn-lg btn-primary">Сохранить изменения</button>
-    </div>
+    <button @click="addModule" class="btn btn-success">Добавить модуль</button>
+    <button @click="submitCourse" class="btn btn-primary mt-3">Сохранить курс</button>
   </div>
 </template>
 
 <script>
-import { reactive } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
 
 export default {
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    const courseId = route.params.id; // Получение ID курса из URL
-    console.log("Идентификатор курса:", courseId); // Логирование ID
-
-    const modules = reactive([]); // Начальное состояние: пустые модули
-
-    const goBack = () => {
-      router.push(`/course-description/${courseId}`); // Возврат к описанию курса
-    };
-
-    const addModule = () => {
-      modules.push({
-        id: Date.now(),
-        title: "",
-        lectures: [],
-        tests: [],
-      });
-    };
-
-    const addLecture = (moduleIndex) => {
-      modules[moduleIndex].lectures.push({
-        id: Date.now(),
-        title: "",
-        text: "",
-      });
-    };
-
-    const addTest = (moduleIndex) => {
-      modules[moduleIndex].tests.push({
-        id: Date.now(),
-        title: "",
-        questions: [],
-      });
-    };
-
-    const deleteModule = (moduleIndex) => {
-      modules.splice(moduleIndex, 1);
-    };
-
-    const deleteLecture = (moduleIndex, lectureIndex) => {
-      modules[moduleIndex].lectures.splice(lectureIndex, 1);
-    };
-
-    const deleteTest = (moduleIndex, testIndex) => {
-      modules[moduleIndex].tests.splice(testIndex, 1);
-    };
-
-    const saveCourse = () => {
-      console.log("Сохранение курса:", {
-        courseId,
-        modules,
-      });
-      alert("Изменения сохранены! Проверьте консоль для подробностей.");
-    };
-
+  data() {
     return {
-      courseId,
-      modules,
-      goBack,
-      addModule,
-      addLecture,
-      addTest,
-      deleteModule,
-      deleteLecture,
-      deleteTest,
-      saveCourse,
+      courseId: this.$route.params.id,  // Получаем ID курса из URL
+      modules: [
+        {
+          name: "",
+          lectures: [
+            {
+              name: "",
+              text: "",
+              tests: [
+                {
+                  name: "",
+                  questions: [
+                    { text: "", isCorrect: false }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     };
   },
+  methods: {
+    addModule() {
+      this.modules.push({
+        name: "",
+        lectures: []
+      });
+    },
+    addLectureToModule(moduleIndex) {
+      this.modules[moduleIndex].lectures.push({
+        name: "",
+        text: "",
+        tests: []
+      });
+    },
+    addTestToLecture(moduleIndex, lectureIndex) {
+      this.modules[moduleIndex].lectures[lectureIndex].tests.push({
+        name: "",
+        questions: []
+      });
+    },
+    addQuestionToTest(moduleIndex, lectureIndex, testIndex) {
+      this.modules[moduleIndex].lectures[lectureIndex].tests[testIndex].questions.push({
+        text: "",
+        isCorrect: false
+      });
+    },
+    submitCourse() {
+      const courseData = {
+        modules: this.modules.map(module => ({
+          name: module.name,
+          lectures: module.lectures.map(lecture => ({
+            name: lecture.name,
+            text: lecture.text,
+            tests: lecture.tests.map(test => ({
+              name: test.name,
+              questions: test.questions.map(question => ({
+                text: question.text,
+                isCorrect: question.isCorrect
+              }))
+            }))
+          }))
+        }))
+      };
+
+      axios.post(`http://localhost:1818/course/update-course/${this.courseId}`, courseData)
+        .then(response => {
+          console.log("Курс обновлен:", response);
+        })
+        .catch(error => {
+          console.error("Ошибка при обновлении курса:", error);
+        });
+    }
+  }
 };
 </script>
 
-<style>
+<style scoped>
+/* Стилизация контейнера */
 .container {
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .card {
-  border: 1px solid #e3e6f0;
-  border-radius: 8px;
-}
-
-.card-header {
-  background-color: #f8f9fc;
+  margin-bottom: 20px;
 }
 
 button {
-  margin-right: 10px;
+  margin-top: 15px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+textarea.form-control {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-check-label {
+  font-size: 14px;
 }
 </style>
