@@ -6,17 +6,17 @@
           <h4>Структура курса</h4>
           <ul>
             <li :class="{ 'active': currentLecture?.id === 'description' }"
-              @click="setCurrentLecture({ content: { id: 'description', title: 'Описание курса', lecture: course.description } })"
+              @click="setCurrentLecture({id: 'description', title: 'Описание курса', lecture: course.description })"
               class="lecture-item">
               Описание курса
             </li>
-            <li v-for="module in modules" :key="module.module.id">
-              <strong>{{ module.module.name }}</strong>
+            <li v-for="module in modules" :key="module.module.name_module">
+              <strong>{{ module.module.name_module }}</strong>
               <ul>
-                <li v-for="lecture in module.lectures" :key="lecture.lecture.content.id"
-                  :class="{ 'active': currentLecture?.id === lecture.lecture.content.id }"
+                <li v-for="lecture in module.module.lectures" :key="lecture.lecture.name"
+                  :class="{ 'active': currentLecture?.content?.title === lecture.lecture.name }"
                   @click="setCurrentLecture(lecture.lecture)" class="lecture-item">
-                  {{ lecture.lecture.content.title }}
+                  {{ lecture.lecture.name }}
                 </li>
               </ul>
             </li>
@@ -30,24 +30,23 @@
         </div>
         <div v-else>
           <div v-if="currentLecture?.id === 'description'" class="lecture-content p-4 bg-white rounded shadow">
-            <h2 class="lecture-title text-primary">{{ currentLecture.content.title }}</h2>
-            <p class="lecture-text">{{ currentLecture.content.lecture }}</p>
+            <h2 class="lecture-title text-primary">{{ currentLecture.title }}</h2>
+            <p class="lecture-text">{{ currentLecture.lecture }}</p>
           </div>
           <div v-else-if="currentLecture" class="lecture-content p-4 bg-white rounded shadow">
-            <h2 class="lecture-title text-primary">{{ currentLecture.content.title }}</h2>
-            <p class="lecture-text">{{ currentLecture.content.lecture }}</p>
+            <h2 class="lecture-title text-primary">{{ currentLecture.name }}</h2>
+            <p class="lecture-text">{{ currentLecture.text }}</p>
 
             <div v-if="currentLecture.tests" class="lecture-test mt-4">
               <h4>Тест к лекции</h4>
               <form @submit.prevent="submitTest">
-                <div v-for="test in currentLecture.tests" :key="test.id" class="question mb-3">
+                <div v-for="test in currentLecture.tests" :key="test.test.name" class="question mb-3">
                   <h5>{{ test.test.name }}</h5>
-                  <div v-for="question in test.questions" :key="question.id" class="question mb-3 form-check">
-                    <input type="checkbox" :id="`answer-${question.question.id}-${question.question.text}`"
-                      :value="answer" v-model="userAnswers[question.question.id]" class="form-check-input"
-                      :disabled="testCompleted" />
-                    <label class="form-check-label" :for="`answer-${question.question.id}-${question.question.text}`">
-                      {{ question.question.text }}
+                  <div v-for="answer in test.test.answers" :key="answer.answer.id" class="question mb-3 form-check">
+                    <input type="checkbox" :id="`answer-${answer.answer.id}`" :value="answer.answer.text"
+                      v-model="userAnswers[answer.answer.id]" class="form-check-input" :disabled="testCompleted" />
+                    <label class="form-check-label" :for="`answer-${answer.answer.id}`">
+                      {{ answer.answer.text }}
                     </label>
                   </div>
                 </div>
@@ -55,8 +54,8 @@
                   Завершить тест
                 </button>
                 <div v-if="testCompleted" class="mt-3">
-                  <p v-for="(result, questionId) in testResults" :key="questionId" class="result">
-                    Вопрос {{ questionId }}:
+                  <p v-for="(result, index) in Object.values(testResults)" :key="index" class="result">
+                    Ответ {{ index + 1 }}:
                     <span v-if="result" class="text-success">Правильный</span>
                     <span v-else class="text-danger">Неправильный</span>
                   </p>
@@ -73,115 +72,126 @@
 </template>
 
 <script>
-  import axios from "axios";
+import axios from "axios";
 
-  export default {
-    data() {
-      return {
-        course: {},
-        modules: [],
-        loading: true,
-        currentLecture: null,
-        userAnswers: {},
-        testCompleted: false,
-        testResults: {},
-      };
+export default {
+  data() {
+    return {
+      course: {},
+      modules: [],
+      loading: true,
+      currentLecture: null,
+      userAnswers: {},
+      testCompleted: false,
+      testResults: {},
+    };
+  },
+
+  created() {
+    const courseId = this.$route.params.id;
+    this.getCourseData(courseId);
+  },
+
+  methods: {
+    async getCourseData(courseId) {
+      try {
+        const response = await axios.post(
+          `http://localhost:1818/course/get-course/${courseId}`
+        );
+        const data = response.data;
+        this.course = data.course;
+        this.modules = data.modules;
+      } catch (error) {
+        console.error("Ошибка при получении данных курса:", error);
+      } finally {
+        this.loading = false;
+      }
     },
 
-    created() {
-      const courseId = this.$route.params.id;
-      this.getCourseData(courseId);
+    setCurrentLecture(lecture) {
+      console.log(lecture)
+      this.currentLecture = lecture;
+      this.testCompleted = false;
+      this.userAnswers = {};
     },
 
-    methods: {
-      async getCourseData(courseId) {
-        try {
-          const response = await axios.post(
-            `http://localhost:1818/course/get-course/${courseId}`
-          );
-          const data = response.data;
-          this.course = data.course;
-          this.modules = data.modules;
-        } catch (error) {
-          console.error("Ошибка при получении данных курса:", error);
-        } finally {
-          this.loading = false;
+    submitTest() {
+      const results = {};
+      for (const test of this.currentLecture.tests) {
+        for (const answer of test.test.answers) {
+          results[answer.answer.id] = answer.answer.is_correct === !!this.userAnswers[answer.answer.id];
         }
-      },
-
-      setCurrentLecture(lecture) {
-        this.currentLecture = lecture;
-        this.testCompleted = false;
-        this.userAnswers = {};
-      },
-
-    }
-  };
+      }
+      this.testResults = results;
+      this.testCompleted = true;
+    },
+  },
+};
 </script>
 
 <style scoped>
-  .container {
-    max-width: 1200px;
-    display: flex;
-    flex-wrap: nowrap;
-  }
+.container {
+  max-width: 1200px;
+  display: flex;
+  flex-wrap: nowrap;
+}
 
-  .sidebar {
-    position: sticky;
-    height: calc(100vh - 110px);
-    width: 250px;
-    padding: 20px;
-    background-color: #e8f5e9;
-    border: 1px solid #c8e6c9;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    z-index: 10;
-  }
+.sidebar {
+  position: sticky;
+  height: calc(100vh - 110px);
+  width: 250px;
+  padding: 20px;
+  background-color: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  z-index: 10;
+}
 
-  .row {
-    display: flex;
-    flex-wrap: nowrap;
-    width: 100%;
-  }
+.row {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+}
 
-  .col-md-3 {
-    flex: 0 0 250px;
-  }
+.col-md-3 {
+  flex: 0 0 250px;
+}
 
-  .col-md-9 {
-    flex: 1;
-  }
+.col-md-9 {
+  flex: 1;
+}
 
-  h4 {
-    color: #388e3c;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
+h4 {
+  color: #388e3c;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
 
-  .lecture-item {
-    cursor: pointer;
-    padding: 8px 10px;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-  }
+.lecture-item {
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
 
-  .lecture-item:hover {
-    background-color: #a5d6a7;
-  }
+.lecture-item:hover {
+  background-color: #a5d6a7;
+}
 
-  .lecture-item.active {
-    background-color: #66bb6a;
-    color: white;
-    font-weight: bold;
-  }
+.lecture-item.active {
+  background-color: #66bb6a;
+  color: white;
+  font-weight: bold;
+}
 
-  .answer-box.selected .form-check-input {
-    background-color: #66bb6a;
-  }
+.answer-box.selected .form-check-input {
+  background-color: #66bb6a;
+}
 
-  .form-check-input:checked {
-    background-color: #388e3c;
-    border-color: #388e3c;
-  }
+.form-check-input:checked {
+  background-color: #388e3c;
+  border-color: #388e3c;
+}
 </style>
