@@ -41,13 +41,16 @@
 
                       <div class="mb-2">
                         <label for="questionText" class="form-label">Текст вопроса:</label>
-                        <input type="text" v-model="question.text" id="questionText" class="form-control" />
+                        <input type="text" v-model="question.question" id="questionText" class="form-control" />
                       </div>
 
-                      <div class="form-check">
-                        <input type="checkbox" v-model="question.isCorrect" id="isCorrect" class="form-check-input" />
-                        <label for="isCorrect" class="form-check-label">Правильный ответ</label>
+                      <div v-for="(a, index) in question.answers" :key="index" class="form-check d-flex align-items-center gap-2">
+                        <input type="text" v-model="a.answer" class="form-control form-control-sm w-auto flex-grow-1">
+                        <input type="checkbox" v-model="a.isCorrect" :id="'answer-' + index" class="form-check-input">
+                        <label :for="'answer-' + index" class="form-check-label m-0"><span v-if="a.isCorrect" class="badge bg-success">✓</span></label>
                       </div>
+                      <button @click="addAnswerToTest(moduleIndex, lectureIndex, testIndex, questionIndex)"
+                              class="btn btn-primary">Добавить ответ</button>
                     </div>
 
                     <button @click="addQuestionToTest(moduleIndex, lectureIndex, testIndex)"
@@ -89,7 +92,7 @@ export default {
                 {
                   name: "",
                   questions: [
-                    { text: "", isCorrect: false }
+                    { question: "", answers: [{answer: "", isCorrect: false}]}
                   ]
                 }
               ]
@@ -121,6 +124,12 @@ export default {
     },
     addQuestionToTest(moduleIndex, lectureIndex, testIndex) {
       this.modules[moduleIndex].lectures[lectureIndex].tests[testIndex].questions.push({
+        text: "",
+        isCorrect: false
+      });
+    },
+    addAnswerToTest(moduleIndex, lectureIndex, testIndex, questionIndex) {
+      this.modules[moduleIndex].lectures[lectureIndex].tests[testIndex].questions[questionIndex].answers.push({
         text: "",
         isCorrect: false
       });
