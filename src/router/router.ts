@@ -24,7 +24,7 @@ const routes = [
     { path: '/add-course', component: AddCourse, meta: { requiresAuth: false } },
     { path: '/course-builder/:id', component: CourseBuilder, meta: { requiresAuth: false } },
     { path: '/course-builder/:id/add-structure', component: AddStructureCourse, meta: { requiresAuth: false } },
-    { path: '/course-details/:id', component: CourseView, meta: { requiresAuth: false } },
+    { path: '/course/:id', component: CourseView, meta: { requiresAuth: false } },
 ];
 
 const router = createRouter({
