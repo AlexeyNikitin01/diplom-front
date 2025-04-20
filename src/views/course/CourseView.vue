@@ -187,123 +187,13 @@
               </form>
             </div>
 
-            <!-- Отображение и редактирование существующего теста -->
-            <div v-else-if="currentLecture.tests" class="test-container">
-              <div class="test-header">
-                <h4 class="test-title">
-                  <i class="bi bi-question-circle"></i>
-                  Тест к лекции
-                </h4>
-                <button v-if="!testEditingMode"
-                        @click="startTestEditing"
-                        class="btn-edit-test">
-                  <i class="bi bi-pencil"></i> Редактировать тест
-                </button>
-              </div>
-
-              <form @submit.prevent="testEditingMode ? saveTestEditing() : submitTest()" class="test-form">
-                <div v-if="testEditingMode" class="test-edit-controls">
-                  <button type="button" @click="addNewQuestion" class="btn-add-question">
-                    <i class="bi bi-plus-lg"></i> Добавить вопрос
-                  </button>
-                </div>
-
-                <div v-for="(test, testIndex) in (testEditingMode ? editableTests : currentLecture.tests)"
-                     :key="test.test.name"
-                     class="question-item">
-                  <div class="question-header">
-                    <input v-if="testEditingMode"
-                           type="text"
-                           :value="test.test.name"
-                           @input="updateTestName(testIndex, $event)"
-                           class="form-input question-title-input"
-                           placeholder="Введите вопрос">
-                    <h5 v-else class="question-title">{{ test.test.name }}</h5>
-
-                    <button v-if="testEditingMode"
-                            type="button"
-                            @click="removeQuestion(testIndex)"
-                            class="btn-remove-question">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-
-                  <div v-for="(question, qIndex) in test.test.questions"
-                       :key="qIndex">
-                    <div v-for="(answer, answerIndex) in question.answers"
-                         :key="answer.id"
-                         class="answer-item">
-                      <div class="answer-input-group">
-                        <input
-                            type="checkbox"
-                            :id="`answer-${answer.id}`"
-                            :checked="testEditingMode ? answer.isCorrect : userAnswers[answer.id]"
-                            @change="testEditingMode ? updateAnswerCorrect(testIndex, qIndex, answerIndex, $event) : updateUserAnswer(answer.id, $event)"
-                            class="answer-input"
-                            :disabled="testCompleted && !testEditingMode">
-
-                        <input v-if="testEditingMode"
-                               type="text"
-                               :value="answer.text"
-                               @input="updateAnswerText(testIndex, qIndex, answerIndex, $event)"
-                               class="form-input answer-text-input"
-                               placeholder="Введите вариант ответа">
-
-                        <label v-else :for="`answer-${answer.id}`" class="answer-label">
-                          {{ answer.text }}
-                        </label>
-                      </div>
-
-                      <button v-if="testEditingMode"
-                              type="button"
-                              @click="removeAnswer(testIndex, qIndex, answerIndex)"
-                              class="btn-remove-answer"
-                              :disabled="question.answers.length <= 1">
-                        <i class="bi bi-x"></i>
-                      </button>
-                    </div>
-
-                    <button v-if="testEditingMode"
-                            type="button"
-                            @click="addNewAnswer(testIndex, qIndex)"
-                            class="btn-add-answer">
-                      <i class="bi bi-plus"></i> Добавить вариант ответа
-                    </button>
-                  </div>
-                </div>
-
-                <div class="test-actions">
-                  <button v-if="!testCompleted && !testEditingMode" type="submit" class="submit-btn">
-                    <i class="bi bi-check-circle"></i> Завершить тест
-                  </button>
-
-                  <button v-if="testEditingMode" type="submit" class="btn-save">
-                    <i class="bi bi-save"></i> Сохранить изменения
-                  </button>
-
-                  <button v-if="testEditingMode"
-                          type="button"
-                          @click="cancelTestEditing"
-                          class="btn-cancel">
-                    <i class="bi bi-x-circle"></i> Отменить
-                  </button>
-                </div>
-
-                <div v-if="testCompleted" class="test-results">
-                  <div v-for="(result, index) in Object.values(testResults)"
-                       :key="index"
-                       class="result-item">
-                    <span class="result-text">Ответ {{ index + 1 }}:</span>
-                    <span v-if="result" class="result-correct">
-                      <i class="bi bi-check-circle"></i> Правильный
-                    </span>
-                    <span v-else class="result-incorrect">
-                      <i class="bi bi-x-circle"></i> Неправильный
-                    </span>
-                  </div>
-                </div>
-              </form>
-            </div>
+            <!-- Компонент теста -->
+            <test-component
+                v-if="currentLecture.tests && !isAddingTest"
+                :initial-test="prepareTestData()"
+                @test-completed="handleTestCompletion"
+                @test-updated="handleTestUpdate"
+            />
           </div>
 
           <!-- Пустое состояние -->
@@ -314,28 +204,28 @@
         </div>
       </div>
     </div>
-  </div>
-  <div class="save-actions">
-    <button @click="saveCourse" class="btn-save-course">
-      <i class="bi bi-save"></i> Сохранить курс
-    </button>
+    <div class="save-actions">
+      <button @click="saveCourse" class="btn-save-course">
+        <i class="bi bi-save"></i> Сохранить курс
+      </button>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from "axios";
-import { v4 as uuidv4 } from 'uuid';
+import TestComponent from '@/components/TestComponent';
 
 export default {
+  components: {
+    TestComponent
+  },
   data() {
     return {
       course: {},
       modules: [],
       loading: true,
       currentLecture: null,
-      userAnswers: {},
-      testCompleted: false,
-      testResults: {},
       isEditingDescription: false,
       editedDescription: '',
       isEditingLecture: false,
@@ -351,10 +241,7 @@ export default {
             ]
           }
         ]
-      },
-      testEditingMode: false,
-      editableTests: [],
-      originalTests: []
+      }
     };
   },
 
@@ -364,93 +251,61 @@ export default {
   },
 
   methods: {
-    // Методы для работы с тестами
-    startTestEditing() {
+    prepareTestData() {
+      if (!this.currentLecture.tests || this.currentLecture.tests.length === 0) {
+        return {
+          name: 'Тест',
+          questions: []
+        };
+      }
+
+      // Преобразуем данные теста в формат, ожидаемый компонентом TestComponent
+      const testData = this.currentLecture.tests[0].test;
+      return {
+        name: testData.name,
+        questions: testData.questions.map(question => ({
+          id: question.id,
+          text: question.text,
+          answers: question.answers.map(answer => ({
+            id: answer.id,
+            text: answer.text,
+            isCorrect: answer.isCorrect
+          }))
+        }))
+      };
+    },
+
+    handleTestCompletion(results) {
+      console.log('Test completed with results:', results);
+      // Здесь можно обработать результаты теста
+    },
+
+    handleTestUpdate(updatedTest) {
+      // Преобразуем данные обратно в формат, используемый в основном компоненте
+      const tests = [{
+        test: {
+          test_id: this.currentLecture.tests?.[0]?.test?.test_id || null,
+          name: updatedTest.name,
+          questions: updatedTest.questions.map(question => ({
+            question_id: question.id || null,
+            text: question.text,
+            answers: question.answers.map(answer => ({
+              answer_id: answer.id || null,
+              text: answer.text,
+              is_correct: answer.isCorrect
+            }))
+          }))
+        }
+      }];
+      console.log(tests)
       if (!this.currentLecture.tests) {
         this.currentLecture.tests = [];
       }
-      this.originalTests = JSON.parse(JSON.stringify(this.currentLecture.tests));
-      this.editableTests = JSON.parse(JSON.stringify(this.currentLecture.tests));
-      this.testEditingMode = true;
-    },
-
-    cancelTestEditing() {
-      this.editableTests = JSON.parse(JSON.stringify(this.originalTests));
-      this.testEditingMode = false;
-    },
-
-    saveTestEditing() {
-      this.currentLecture.tests = JSON.parse(JSON.stringify(this.editableTests));
-      this.testEditingMode = false;
+      this.currentLecture.tests = tests;
       this.saveCourse();
     },
 
-    addNewQuestion() {
-      this.editableTests.push({
-        test: {
-          id: null,
-          name: 'Новый вопрос',
-          questions: [{
-            id: null,
-            text: 'Новый вопрос',
-            answers: [
-              { id: null, text: 'Вариант ответа 1', isCorrect: false },
-              { id: null, text: 'Вариант ответа 2', isCorrect: false }
-            ]
-          }]
-        }
-      });
-    },
-
-    removeQuestion(index) {
-      this.editableTests.splice(index, 1);
-    },
-
-    addNewAnswer(testIndex, questionIndex = 0) {
-      if (!this.editableTests[testIndex].test.questions[questionIndex].answers) {
-        this.$set(this.editableTests[testIndex].test.questions[questionIndex], 'answers', []);
-      }
-      this.editableTests[testIndex].test.questions[questionIndex].answers.push({
-        id: null,
-        text: 'Новый вариант',
-        isCorrect: false
-      });
-    },
-
-    removeAnswer(testIndex, questionIndex, answerIndex) {
-      this.editableTests[testIndex].test.questions[questionIndex].answers.splice(answerIndex, 1);
-    },
-
-    updateTestName(testIndex, event) {
-      this.editableTests[testIndex].test.name = event.target.value;
-    },
-
-    updateAnswerText(testIndex, questionIndex, answerIndex, event) {
-      this.editableTests[testIndex].test.questions[questionIndex].answers[answerIndex].text = event.target.value;
-    },
-
-    updateAnswerCorrect(testIndex, questionIndex, answerIndex, event) {
-      this.editableTests[testIndex].test.questions[questionIndex].answers[answerIndex].isCorrect = event.target.checked;
-    },
-
-    submitTest() {
-      const results = {};
-      for (const test of this.currentLecture.tests) {
-        for (const question of test.test.questions) {
-          for (const answer of question.answers) {
-            results[answer.id] = answer.isCorrect === !!this.userAnswers[answer.id];
-          }
-        }
-      }
-      this.testResults = results;
-      this.testCompleted = true;
-    },
-
-    updateUserAnswer(answerId, event) {
-      this.$set(this.userAnswers, answerId, event.target.checked);
-    },
-
-    // Остальные методы
+    // Остальные методы остаются без изменений
     toggleLectureEdit() {
       this.isEditingLecture = !this.isEditingLecture;
       if (this.isEditingLecture) {
@@ -518,15 +373,15 @@ export default {
     saveTest() {
       const tests = [{
         test: {
-          id: null,
+          test_id: this.currentLecture.tests?.[0]?.test?.test_id || null,
           name: 'Тест',
           questions: this.testForm.questions.map(question => ({
-            id: null,
+            question_id: null,
             text: question.text,
             answers: question.answers.map(answer => ({
-              id: null,
+              answer_id: null,
               text: answer.text,
-              isCorrect: answer.isCorrect
+              is_correct: answer.isCorrect
             }))
           }))
         }
@@ -604,9 +459,8 @@ export default {
 
     setCurrentLecture(lecture) {
       this.currentLecture = lecture;
-      this.testCompleted = false;
-      this.userAnswers = {};
-      this.testEditingMode = false;
+      this.isEditingLecture = false;
+      this.isAddingTest = false;
     },
 
     addModule() {
@@ -672,7 +526,6 @@ export default {
       axios.post(`http://localhost:1818/course/update-course/${this.$route.params.id}`, courseData)
           .then(response => {
             console.log("Курс обновлен:", response);
-            // Обновляем данные без перезагрузки страницы
             this.getCourseData(this.$route.params.id);
           })
           .catch(error => {
@@ -1085,154 +938,6 @@ export default {
 
 .test-title i {
   color: var(--info);
-}
-
-.test-edit-controls {
-  margin-bottom: 1rem;
-}
-
-.question-item {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.question-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.question-title {
-  color: var(--dark);
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.question-title-input {
-  flex-grow: 1;
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-}
-
-.answer-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  padding: 0.75rem;
-  background: white;
-  border-radius: var(--border-radius);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.answer-input-group {
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-  gap: 0.75rem;
-}
-
-.answer-input {
-  margin-right: 0.75rem;
-}
-
-.answer-text-input {
-  flex-grow: 1;
-}
-
-.answer-label {
-  cursor: pointer;
-  transition: color 0.2s;
-  flex-grow: 1;
-}
-
-.test-results {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: var(--border-radius);
-}
-
-.result-item {
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.result-text {
-  font-weight: 500;
-}
-
-.result-correct {
-  color: var(--success);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.result-incorrect {
-  color: var(--danger);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Кнопки редактирования теста */
-.btn-edit-test {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-
-.btn-edit-test:hover {
-  background: #bae6fd;
-}
-
-.btn-remove-question, .btn-remove-answer {
-  background: #fee2e2;
-  color: #dc2626;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-remove-question:hover, .btn-remove-answer:hover {
-  background: #fecaca;
-}
-
-.btn-add-question, .btn-add-answer {
-  background: #ecfdf5;
-  color: #059669;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  transition: all 0.2s;
-}
-
-.btn-add-question:hover, .btn-add-answer:hover {
-  background: #d1fae5;
 }
 
 /* Пустое состояние */
