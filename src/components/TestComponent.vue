@@ -20,7 +20,7 @@
           </div>
         </div>
 
-        <button @click="submitTest" class="submit-btn">Submit Test</button>
+        <button @click="submitTest" class="submit-btn">проверить</button>
       </div>
 
       <div v-else class="results-container">
@@ -34,24 +34,24 @@
             </span>
           </p>
         </div>
-        <button @click="resetTest" class="reset-btn">Retake Test</button>
+        <button @click="resetTest" class="reset-btn">сбросить</button>
       </div>
 
-      <button v-if="!testCompleted" @click="enterEditMode" class="edit-btn">Edit Test</button>
+      <button v-if="!testCompleted" @click="enterEditMode" class="edit-btn">изменить</button>
     </div>
 
     <!-- Test Editing Mode -->
     <div v-else class="edit-mode">
-      <h2>Edit Test: {{ testForm.name }}</h2>
+      <h2>Редактирование: {{ testForm.name }}</h2>
 
       <div class="form-group">
-        <label for="test-name">Test Name:</label>
+        <label for="test-name">название:</label>
         <input id="test-name" v-model="testForm.name" type="text" class="form-control">
       </div>
 
       <div v-for="(question, qIndex) in testForm.questions" :key="qIndex" class="question-edit">
         <div class="form-group">
-          <label :for="'question-text-'+qIndex">Question {{ qIndex + 1 }}:</label>
+          <label :for="'question-text-'+qIndex">Вопрос {{ qIndex + 1 }}:</label>
           <input
               :id="'question-text-'+qIndex"
               v-model="question.text"
@@ -62,7 +62,7 @@
 
         <div v-for="(answer, aIndex) in question.answers" :key="aIndex" class="answer-edit">
           <div class="form-group">
-            <label :for="'answer-text-'+qIndex+'-'+aIndex">Answer {{ aIndex + 1 }}:</label>
+            <label :for="'answer-text-'+qIndex+'-'+aIndex">Ответ {{ aIndex + 1 }}:</label>
             <div class="answer-input-group">
               <input
                   :id="'answer-text-'+qIndex+'-'+aIndex"
@@ -77,18 +77,18 @@
                   v-model="question.correctAnswer"
                   @change="updateCorrectAnswers(question)"
               >
-              <label>Correct</label>
+              <label>верный</label>
             </div>
           </div>
         </div>
 
-        <button @click="addAnswer(qIndex)" class="add-answer-btn">Add Answer</button>
-        <button @click="removeQuestion(qIndex)" class="remove-btn">Remove Question</button>
+        <button @click="addAnswer(qIndex)" class="add-answer-btn">добавить ответ</button>
+        <button @click="removeQuestion(qIndex)" class="remove-btn">удалить вопрос</button>
       </div>
 
-      <button @click="addQuestion" class="add-question-btn">Add Question</button>
-      <button @click="saveChanges" class="save-btn">Save Changes</button>
-      <button @click="cancelEdit" class="cancel-btn">Cancel</button>
+      <button @click="addQuestion" class="add-question-btn">добавить вопрос</button>
+      <button @click="saveChanges" class="save-btn">сохранить</button>
+      <button @click="cancelEdit" class="cancel-btn">отменить</button>
     </div>
   </div>
 </template>

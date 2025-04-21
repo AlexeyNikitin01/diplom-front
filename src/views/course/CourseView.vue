@@ -2,49 +2,15 @@
   <div class="course-container">
     <div class="course-layout">
       <!-- Сайдбар -->
-      <div class="course-sidebar">
-        <div class="sidebar-content">
-          <h4 class="sidebar-title">Структура курса</h4>
-          <ul class="lecture-list">
-            <li
-                :class="{ 'active': currentLecture?.id === 'description' }"
-                @click="setCurrentLecture({id: 'description', title: 'Описание курса', lecture: course.description })"
-                class="lecture-item">
-              <i class="bi bi-info-circle"></i>
-              <span>Описание курса</span>
-            </li>
-
-            <li v-for="module in modules" :key="module.module.name_module" class="module-item">
-              <div class="module-header">
-                <i class="bi bi-folder"></i>
-                <strong>{{ module.module.name_module }}</strong>
-                <button @click.stop="addLecture(module.module)" class="btn-add">
-                  <i class="bi bi-plus-circle"></i>
-                  <span>Лекцию</span>
-                </button>
-              </div>
-              <ul class="sub-lecture-list">
-                <li
-                    v-for="lecture in module.module.lectures"
-                    :key="lecture.lecture.name"
-                    :class="{ 'active': currentLecture?.content?.title === lecture.lecture.name }"
-                    @click="setCurrentLecture(lecture.lecture)"
-                    class="sub-lecture-item">
-                  <i class="bi bi-file-earmark-text"></i>
-                  <span>{{ lecture.lecture.name }}</span>
-                </li>
-              </ul>
-            </li>
-
-            <li class="add-module-container">
-              <button @click="addModule" class="btn-add-module">
-                <i class="bi bi-plus-lg"></i>
-                <span>Добавить модуль</span>
-              </button>
-            </li>
-          </ul>
-        </div>
-      </div>
+      <SideBarComponent
+          :editing="edit"
+          :course="course"
+          :modules="modules"
+          :current-lecture="currentLecture"
+          @set-current-lecture="setCurrentLecture"
+          @add-module="addModule"
+          @add-lecture="addLecture"
+      />
 
       <!-- Основное содержимое -->
       <div class="course-main">
@@ -208,6 +174,9 @@
       <button @click="saveCourse" class="btn-save-course">
         <i class="bi bi-save"></i> Сохранить курс
       </button>
+      <button @click="editing" class="btn-save-course">
+        <i class="bi bi-save"></i> Редактировать курс
+      </button>
     </div>
   </div>
 </template>
@@ -215,13 +184,16 @@
 <script>
 import axios from "axios";
 import TestComponent from '@/components/TestComponent';
+import SideBarComponent from '@/components/SideBarComponent';
 
 export default {
   components: {
-    TestComponent
+    TestComponent,
+    SideBarComponent
   },
   data() {
     return {
+      edit: false,
       course: {},
       modules: [],
       loading: true,
@@ -236,8 +208,8 @@ export default {
           {
             text: '',
             answers: [
-              { text: '', isCorrect: false },
-              { text: '', isCorrect: false }
+              {text: '', isCorrect: false},
+              {text: '', isCorrect: false}
             ]
           }
         ]
@@ -259,7 +231,6 @@ export default {
         };
       }
 
-      // Преобразуем данные теста в формат, ожидаемый компонентом TestComponent
       const testData = this.currentLecture.tests[0].test;
       return {
         name: testData.name,
@@ -277,11 +248,9 @@ export default {
 
     handleTestCompletion(results) {
       console.log('Test completed with results:', results);
-      // Здесь можно обработать результаты теста
     },
 
     handleTestUpdate(updatedTest) {
-      // Преобразуем данные обратно в формат, используемый в основном компоненте
       const tests = [{
         test: {
           test_id: this.currentLecture.tests?.[0]?.test?.test_id || null,
@@ -297,15 +266,12 @@ export default {
           }))
         }
       }];
-      console.log(tests)
       if (!this.currentLecture.tests) {
         this.currentLecture.tests = [];
       }
       this.currentLecture.tests = tests;
-      this.saveCourse();
     },
 
-    // Остальные методы остаются без изменений
     toggleLectureEdit() {
       this.isEditingLecture = !this.isEditingLecture;
       if (this.isEditingLecture) {
@@ -336,8 +302,8 @@ export default {
             {
               text: '',
               answers: [
-                { text: '', isCorrect: false },
-                { text: '', isCorrect: false }
+                {text: '', isCorrect: false},
+                {text: '', isCorrect: false}
               ]
             }
           ]
@@ -349,8 +315,8 @@ export default {
       this.testForm.questions.push({
         text: '',
         answers: [
-          { text: '', isCorrect: false },
-          { text: '', isCorrect: false }
+          {text: '', isCorrect: false},
+          {text: '', isCorrect: false}
         ]
       });
     },
@@ -392,7 +358,6 @@ export default {
       }
       this.currentLecture.tests = tests;
       this.isAddingTest = false;
-      this.saveCourse();
     },
 
     async getCourseData(courseId) {
@@ -473,7 +438,6 @@ export default {
             lectures: []
           }
         });
-        this.saveCourse();
       }
     },
 
@@ -490,7 +454,6 @@ export default {
         };
         module.lectures.push(newLecture);
         this.setCurrentLecture(newLecture.lecture);
-        this.saveCourse();
       }
     },
 
@@ -507,12 +470,12 @@ export default {
               test_id: test.test.test_id,
               name: test.test.name,
               questions: test.test.questions.map(question => ({
-                question_id: question.id,
+                question_id: question.question_id,
                 text: question.text,
                 answers: question.answers.map(answer => ({
-                  answer_id: answer.id,
+                  answer_id: answer.answer_id,
                   text: answer.text,
-                  is_correct: answer.isCorrect
+                  is_correct: answer.is_correct
                 }))
               }))
             }))
@@ -532,6 +495,15 @@ export default {
             console.error("Ошибка при обновлении курса:", error);
             alert("Произошла ошибка при сохранении курса. Пожалуйста, попробуйте снова.");
           });
+    },
+
+    editing() {
+      this.edit = !this.edit;
+    },
+
+    saveDescription() {
+      this.course.description = this.editedDescription;
+      this.isEditingDescription = false;
     }
   }
 };
@@ -565,185 +537,6 @@ export default {
   display: flex;
   min-height: calc(100vh - 80px);
   background: #f5f7ff;
-}
-
-/* Сайдбар */
-.course-sidebar {
-  width: 320px;
-  background: white;
-  border-right: 1px solid #e9ecef;
-  padding: 1.5rem;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
-}
-
-.sidebar-content {
-  position: sticky;
-  top: 1rem;
-}
-
-.sidebar-title {
-  color: var(--primary);
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.lecture-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.lecture-item, .sub-lecture-item {
-  padding: 0.75rem 1rem;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-}
-
-.lecture-item {
-  background: var(--primary-light);
-  color: var(--primary);
-  font-weight: 500;
-}
-
-.lecture-item:hover {
-  background: #d6e0ff;
-}
-
-.lecture-item.active {
-  background: var(--primary);
-  color: white;
-}
-
-.lecture-item i {
-  font-size: 1rem;
-  margin-right: 0.75rem;
-}
-
-.module-item {
-  margin-top: 1rem;
-}
-
-.module-header {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: #f8f9fa;
-  border-radius: var(--border-radius);
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
-}
-
-.module-header i {
-  color: var(--warning);
-  margin-right: 0.75rem;
-  font-size: 1rem;
-}
-
-.module-header strong {
-  flex-grow: 1;
-  font-weight: 500;
-}
-
-.btn-add {
-  background: transparent;
-  border: none;
-  color: var(--gray);
-  display: flex;
-  align-items: center;
-  padding: 0.25rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.85rem;
-  border-radius: 50%;
-}
-
-.btn-add:hover {
-  color: var(--primary);
-  background: #e9ecef;
-}
-
-.sub-lecture-list {
-  list-style: none;
-  padding-left: 1.5rem;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sub-lecture-item {
-  color: var(--gray);
-  position: relative;
-  padding-left: 2rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-  margin: 2px 0;
-}
-
-.sub-lecture-item:before {
-  content: "";
-  position: absolute;
-  left: 1.25rem;
-  top: 50%;
-  width: 0.5rem;
-  height: 1px;
-  background: #dee2e6;
-}
-
-.sub-lecture-item:hover {
-  color: var(--dark);
-  background: #f8f9fa;
-}
-
-.sub-lecture-item.active {
-  color: var(--primary);
-  font-weight: 500;
-  background: var(--primary-light);
-}
-
-.sub-lecture-item i {
-  font-size: 0.9rem;
-  margin-right: 0.75rem;
-  transition: color 0.2s ease;
-}
-
-.add-module-container {
-  margin-top: 1.5rem;
-}
-
-.btn-add-module {
-  width: 100%;
-  background: var(--primary);
-  color: #000000;
-  border: none;
-  padding: 0.75rem;
-  border-radius: var(--border-radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-  box-shadow: 0 2px 10px rgba(67, 97, 238, 0.2);
-}
-
-.btn-add-module:hover {
-  background: var(--secondary);
-  transform: translateY(-1px);
 }
 
 /* Основное содержимое */
@@ -991,12 +784,6 @@ export default {
 @media (max-width: 992px) {
   .course-layout {
     flex-direction: column;
-  }
-
-  .course-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
   }
 
   .course-main {
