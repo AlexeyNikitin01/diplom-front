@@ -40,9 +40,8 @@
               </div>
             </form>
 
-            <div v-else class="lecture-text">
-              {{ currentLecture.lecture }}
-            </div>
+            <div v-else class="lecture-text" v-html="currentLecture.text"></div>
+
           </div>
 
           <!-- Контент лекции -->
@@ -53,7 +52,7 @@
                 {{ currentLecture.name }}
               </h2>
               <div class="lecture-actions">
-                <button class="btn-edit" @click="toggleLectureEdit">
+                <button v-if="edit" class="btn-edit" @click="toggleLectureEdit">
                   <i class="bi bi-pencil"></i> {{ isEditingLecture ? 'Отменить' : 'Редактировать' }}
                 </button>
                 <button
@@ -68,7 +67,7 @@
 
             <!-- Форма редактирования лекции -->
             <form v-if="isEditingLecture" @submit.prevent="saveLecture" class="edit-form">
-              <textarea v-model="editedLectureText" class="form-textarea"></textarea>
+              <LectureEditor v-model="editedLectureText" />
               <div class="form-actions">
                 <button type="submit" class="btn-save">Сохранить</button>
                 <button type="button" class="btn-cancel" @click="toggleLectureEdit">Отменить</button>
@@ -76,8 +75,7 @@
             </form>
 
             <!-- Основной текст лекции -->
-            <div v-else class="lecture-text">
-              {{ currentLecture.text }}
+            <div v-else  class="lecture-text" v-html="currentLecture.text">
             </div>
 
             <!-- Форма создания/редактирования теста -->
@@ -156,6 +154,7 @@
             <!-- Компонент теста -->
             <test-component
                 v-if="currentLecture.tests && !isAddingTest"
+                :editing="edit"
                 :initial-test="prepareTestData()"
                 @test-completed="handleTestCompletion"
                 @test-updated="handleTestUpdate"
@@ -186,11 +185,13 @@
 import axios from "axios";
 import TestComponent from '@/components/TestComponent';
 import SideBarComponent from '@/components/SideBarComponent';
+import LectureEditor from '@/components/LectureEditor.vue';
 
 export default {
   components: {
     TestComponent,
-    SideBarComponent
+    SideBarComponent,
+    LectureEditor
   },
   data() {
     return {

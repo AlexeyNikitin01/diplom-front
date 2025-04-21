@@ -1,5 +1,5 @@
 <template>
-  <div class="test-container">
+  <div v-if="testForm.questions.length > 0 || editing" class="test-container">
     <!-- Test Display Mode -->
     <div v-if="!testEditingMode">
       <h2>{{ testForm.name }}</h2>
@@ -23,8 +23,8 @@
         <button @click="submitTest" class="submit-btn">проверить</button>
       </div>
 
-      <div v-else class="results-container">
-        <h3>Test Results</h3>
+      <div v-else-if="testCompleted && !editing" class="results-container">
+        <h3>результат</h3>
         <div v-for="(question, qIndex) in testForm.questions" :key="qIndex" class="result-item">
           <p>
             <strong>{{ qIndex + 1 }}. {{ question.text }}</strong><br>
@@ -37,11 +37,11 @@
         <button @click="resetTest" class="reset-btn">сбросить</button>
       </div>
 
-      <button v-if="!testCompleted" @click="enterEditMode" class="edit-btn">изменить</button>
+      <button v-if="!testCompleted && editing" @click="enterEditMode" class="edit-btn">изменить</button>
     </div>
 
     <!-- Test Editing Mode -->
-    <div v-else class="edit-mode">
+    <div v-else-if="editing" class="edit-mode">
       <h2>Редактирование: {{ testForm.name }}</h2>
 
       <div class="form-group">
@@ -99,6 +99,15 @@ export default {
     initialTest: {
       type: Object,
       required: true
+    },
+    editing: {
+      type: Boolean,
+      default: false
+    }
+  },
+  computed: {
+    editingEnabled() {
+      return this.editing;
     }
   },
   data() {
