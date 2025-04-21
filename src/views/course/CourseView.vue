@@ -171,11 +171,12 @@
       </div>
     </div>
     <div class="save-actions">
-      <button @click="saveCourse" class="btn-save-course">
+      <button v-if="edit" @click="saveCourse" class="btn-save-course">
         <i class="bi bi-save"></i> Сохранить курс
       </button>
-      <button @click="editing" class="btn-save-course">
-        <i class="bi bi-save"></i> Редактировать курс
+
+      <button v-if="!edit" @click="editing" class="btn-save-course">
+        <i class="bi bi-pencil"></i> Редактировать курс
       </button>
     </div>
   </div>
@@ -486,6 +487,7 @@ export default {
 
     saveCourse() {
       const courseData = this.prepareCourseData();
+      this.edit = !this.edit;
       axios.post(`http://localhost:1818/course/update-course/${this.$route.params.id}`, courseData)
           .then(response => {
             console.log("Курс обновлен:", response);
