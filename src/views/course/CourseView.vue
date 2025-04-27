@@ -3,10 +3,10 @@
     <div class="course-layout">
       <!-- Сайдбар -->
       <SideBarComponent
-          :editing="edit"
           :course="course"
-          :modules="modules"
           :current-lecture="currentLecture"
+          :editing="edit"
+          :modules="modules"
           @set-current-lecture="setCurrentLecture"
           @add-module="addModule"
           @add-lecture="addLecture"
@@ -27,20 +27,20 @@
                 <i class="bi bi-info-circle"></i>
                 {{ currentLecture.title }}
               </h2>
-              <button class="btn-edit" @click="isEditingDescription = !isEditingDescription">
+              <button v-if="edit" class="btn-edit" @click="isEditingDescription = !isEditingDescription">
                 <i class="bi bi-pencil"></i> {{ isEditingDescription ? 'Отменить' : 'Редактировать' }}
               </button>
             </div>
 
-            <form v-if="isEditingDescription" @submit.prevent="saveDescription" class="edit-form">
+            <form v-if="isEditingDescription" class="edit-form" @submit.prevent="saveDescription">
               <textarea v-model="editedDescription" class="form-textarea"></textarea>
               <div class="form-actions">
-                <button type="submit" class="btn-save">Сохранить</button>
-                <button type="button" class="btn-cancel" @click="isEditingDescription = false">Отменить</button>
+                <button class="btn-save" type="submit">Сохранить</button>
+                <button class="btn-cancel" type="button" @click="isEditingDescription = false">Отменить</button>
               </div>
             </form>
 
-            <div v-else class="lecture-text" v-html="currentLecture.text"></div>
+            <div v-else class="lecture-text" v-html="currentLecture.lecture"></div>
 
           </div>
 
@@ -56,9 +56,9 @@
                   <i class="bi bi-pencil"></i> {{ isEditingLecture ? 'Отменить' : 'Редактировать' }}
                 </button>
                 <button
+                    v-if="!currentLecture.tests || isAddingTest"
                     class="btn-add-test"
-                    @click="toggleTestForm"
-                    v-if="!currentLecture.tests || isAddingTest">
+                    @click="toggleTestForm">
                   <i class="bi bi-plus-circle"></i>
                   {{ isAddingTest ? 'Отменить' : currentLecture.tests ? 'Изменить тест' : 'Добавить тест' }}
                 </button>
@@ -66,16 +66,16 @@
             </div>
 
             <!-- Форма редактирования лекции -->
-            <form v-if="isEditingLecture" @submit.prevent="saveLecture" class="edit-form">
-              <LectureEditor v-model="editedLectureText" />
+            <form v-if="isEditingLecture" class="edit-form" @submit.prevent="saveLecture">
+              <LectureEditor v-model="editedLectureText"/>
               <div class="form-actions">
-                <button type="submit" class="btn-save">Сохранить</button>
-                <button type="button" class="btn-cancel" @click="toggleLectureEdit">Отменить</button>
+                <button class="btn-save" type="submit">Сохранить</button>
+                <button class="btn-cancel" type="button" @click="toggleLectureEdit">Отменить</button>
               </div>
             </form>
 
             <!-- Основной текст лекции -->
-            <div v-else  class="lecture-text" v-html="currentLecture.text">
+            <div v-else class="lecture-text" v-html="currentLecture.text">
             </div>
 
             <!-- Форма создания/редактирования теста -->
@@ -85,68 +85,68 @@
                 {{ currentLecture.tests ? 'Редактирование теста' : 'Создание теста' }}
               </h4>
 
-              <form @submit.prevent="saveTest" class="test-edit-form">
+              <form class="test-edit-form" @submit.prevent="saveTest">
                 <div v-for="(question, qIndex) in testForm.questions" :key="qIndex" class="question-form">
                   <div class="form-group">
                     <label>Вопрос {{ qIndex + 1 }}</label>
                     <input
-                        type="text"
                         v-model="question.text"
+                        class="form-input"
                         placeholder="Текст вопроса"
                         required
-                        class="form-input">
+                        type="text">
                   </div>
 
                   <div class="answers-list">
                     <div v-for="(answer, aIndex) in question.answers" :key="aIndex" class="answer-form">
                       <div class="answer-input-group">
                         <input
-                            type="checkbox"
                             v-model="answer.isCorrect"
-                            class="answer-checkbox">
+                            class="answer-checkbox"
+                            type="checkbox">
                         <input
-                            type="text"
                             v-model="answer.text"
+                            class="form-input answer-input"
                             placeholder="Вариант ответа"
                             required
-                            class="form-input answer-input">
+                            type="text">
                       </div>
                       <button
-                          type="button"
-                          @click="removeAnswerFromForm(qIndex, aIndex)"
+                          v-if="question.answers.length > 1"
                           class="btn-remove"
-                          v-if="question.answers.length > 1">
+                          type="button"
+                          @click="removeAnswerFromForm(qIndex, aIndex)">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
 
                     <button
+                        class="btn-add-answer"
                         type="button"
-                        @click="addAnswerToForm(qIndex)"
-                        class="btn-add-answer">
+                        @click="addAnswerToForm(qIndex)">
                       <i class="bi bi-plus"></i> Добавить вариант ответа
                     </button>
                   </div>
 
                   <button
-                      type="button"
-                      @click="removeQuestionFromForm(qIndex)"
+                      v-if="testForm.questions.length > 1"
                       class="btn-remove-question"
-                      v-if="testForm.questions.length > 1">
+                      type="button"
+                      @click="removeQuestionFromForm(qIndex)">
                     <i class="bi bi-trash"></i> Удалить вопрос
                   </button>
                 </div>
 
                 <button
+                    class="btn-add-question"
                     type="button"
-                    @click="addQuestionToForm"
-                    class="btn-add-question">
+                    @click="addQuestionToForm">
                   <i class="bi bi-plus-lg"></i> Добавить вопрос
                 </button>
 
                 <div class="form-actions">
-                  <button type="submit" class="btn-save">Сохранить тест</button>
-                  <button type="button" class="btn-cancel" @click="toggleTestForm">Отменить</button>
+                  <button class="btn-save" type="submit">Сохранить тест</button>
+                  <button class="btn-cancel" type="button" @click="toggleTestForm">Отменить</button>
                 </div>
               </form>
             </div>
@@ -170,11 +170,11 @@
       </div>
     </div>
     <div class="save-actions">
-      <button v-if="edit" @click="saveCourse" class="btn-save-course">
+      <button v-if="edit" class="btn-save-course" @click="saveCourse">
         <i class="bi bi-save"></i> Сохранить курс
       </button>
 
-      <button v-if="!edit" @click="editing" class="btn-save-course">
+      <button v-if="!edit" class="btn-save-course" @click="editing">
         <i class="bi bi-pencil"></i> Редактировать курс
       </button>
     </div>
@@ -183,9 +183,9 @@
 
 <script>
 import axios from "axios";
-import TestComponent from '@/components/TestComponent';
-import SideBarComponent from '@/components/SideBarComponent';
-import LectureEditor from '@/components/LectureEditor.vue';
+import TestComponent from '@/components/course/TestComponent.vue';
+import SideBarComponent from '@/components/course/SideBarComponent.vue';
+import LectureEditor from '@/components/course/LectureEditor.vue';
 
 export default {
   components: {
@@ -365,7 +365,13 @@ export default {
     async getCourseData(courseId) {
       try {
         const response = await axios.post(
-            `http://localhost:1818/course/get-course/${courseId}`
+            `http://localhost:1818/course/get/${courseId}`,
+            {},
+            {
+              headers: {
+                authorization: 'Bearer ' + localStorage.getItem("token")
+              }
+            }
         );
         const data = response.data;
 
@@ -489,7 +495,11 @@ export default {
     saveCourse() {
       const courseData = this.prepareCourseData();
       this.edit = !this.edit;
-      axios.post(`http://localhost:1818/course/update-course/${this.$route.params.id}`, courseData)
+      axios.post(`http://localhost:1818/course/update/${this.$route.params.id}`, courseData, {
+        headers: {
+          authorization: 'Bearer ' + localStorage.getItem("token")
+        }
+      })
           .then(response => {
             console.log("Курс обновлен:", response);
             this.getCourseData(this.$route.params.id);

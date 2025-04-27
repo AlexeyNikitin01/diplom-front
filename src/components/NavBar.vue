@@ -4,24 +4,39 @@
             <div class="navbar-header ">
                 <a class="navbar-brand" href="/"><img height="100" alt="Vue logo" src="../assets/logo.png">diplom</a>
             </div>
-            
-            <ul class="nav me-auto mb-2 mb-lg-0 list-inline">
-                <li class="list-inline-item">
-                    <a class="btn nav-link active" aria-current="page" href="/">Home</a>
-                </li>
-                <li class="list-inline-item">
-                    <a class="btn nav-link active" aria-current="page" href="/about">About</a>
-                </li>
-                <li class="list-inline-item">
-                    <a class="btn nav-link active" aria-current="page" href="/courses">Courses</a>
-                </li>
-                <li class="list-inline-item">
-                    <a class="btn nav-link active" aria-current="page" href="/lectures">Lectures</a>
-                </li>
-                <li class="list-inline-item">
-                    <a class="btn nav-link active" aria-current="page" href="/models">Models</a>
-                </li>
-            </ul>
+
+          <ul class="nav me-auto mb-2 mb-lg-0 list-inline">
+            <li class="list-inline-item">
+              <a class="btn nav-link active" aria-current="page" href="/">
+                <i class="bi bi-house-door-fill me-2"></i>Главная
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a class="btn nav-link active" aria-current="page" href="/about">
+                <i class="bi bi-info-circle-fill me-2"></i>О нас
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a class="btn nav-link active" aria-current="page" href="/courses">
+                <i class="bi bi-book-half me-2"></i>Курсы
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a class="btn nav-link active" aria-current="page" href="/lectures">
+                <i class="bi bi-collection-play-fill me-2"></i>Лекции
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a class="btn nav-link active" aria-current="page" href="/models">
+                <i class="bi bi-diagram-3-fill me-2"></i>Модели
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a class="btn nav-link active" aria-current="page" href="/contacts">
+                <i class="bi bi-telephone-fill me-2"></i>Контакты
+              </a>
+            </li>
+          </ul>
             
             <ul class="nav navbar-right list-inline" v-if="tokenExist">
                 <li class="list-inline-item"><a href="auth" class="btn btn-info">Войти</a></li>

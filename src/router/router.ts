@@ -1,16 +1,14 @@
-import LoginForm from "@/components/LoginForm.vue";
-import RegisterForm from "@/components/RegisterForm.vue";
+import LoginForm from "@/components/user/LoginForm.vue";
+import RegisterForm from "@/components/user/RegisterForm.vue";
 import AboutSite from "@/views/AboutSite.vue";
 import AddCourse from "@/views/course/AddCourse.vue";
 import CabinetVIew from "@/views/CabinetVIew.vue";
-import CourseBuilder from "@/views/course/CourseBuilder.vue";
 import CourseView from "@/views/course/CourseView.vue";
 import CoursesView from "@/views/course/CoursesView.vue";
 import IndexVue from "@/views/IndexVue.vue";
 import LecturesView from "@/views/LecturesView.vue";
 import ModelView from "@/views/ModelView.vue";
 import { createRouter, createWebHistory } from "vue-router";
-import AddStructureCourse from "@/views/course/AddStructureCourse.vue";
 
 const routes = [
     { path: '/auth', component: LoginForm },
@@ -21,9 +19,7 @@ const routes = [
     { path: '/lectures', component: LecturesView, meta: { requiresAuth: true } },
     { path: '/models', component: ModelView, meta: { requiresAuth: true } },
     { path: '/cabinet', component: CabinetVIew, meta: { requiresAuth: true } },
-    { path: '/add-course', component: AddCourse, meta: { requiresAuth: false } },
-    { path: '/course-builder/:id', component: CourseBuilder, meta: { requiresAuth: false } },
-    { path: '/course-builder/:id/add-structure', component: AddStructureCourse, meta: { requiresAuth: false } },
+    { path: '/course/create', component: AddCourse, meta: { requiresAuth: false } },
     { path: '/course/:id', component: CourseView, meta: { requiresAuth: false } },
 ];
 

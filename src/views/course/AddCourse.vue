@@ -61,14 +61,15 @@ export default {
         formData.append("description", course.description);
         formData.append("file", selectedFile.value); // Отправка файла
 
-        const response = await axios.post("http://localhost:1818/course/add-course", formData, {
+        const response = await axios.post("http://localhost:1818/course/create", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
+            authorization: 'Bearer ' + localStorage.getItem("token"),
           },
         });
 
         const courseId = response.data.course.id; // Предполагаем, что сервер возвращает ID курса
-        router.push(`/course-builder/${courseId}`);
+        router.push(`/course/${courseId}`);
       } catch (error) {
         console.error("Ошибка при создании курса:", error);
         alert("Произошла ошибка при создании курса. Попробуйте снова.");
