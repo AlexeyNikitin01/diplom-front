@@ -169,7 +169,7 @@
         </div>
       </div>
     </div>
-    <div class="save-actions">
+    <div v-if="isAuthor" class="save-actions">
       <button v-if="edit" class="btn-save-course" @click="saveCourse">
         <i class="bi bi-save"></i> Сохранить курс
       </button>
@@ -196,6 +196,8 @@ export default {
   data() {
     return {
       edit: false,
+      isAuthor: false,
+      userId: null,
       course: {},
       modules: [],
       loading: true,
@@ -218,13 +220,49 @@ export default {
       }
     };
   },
-
-  created() {
+ async created() {
     const courseId = this.$route.params.id;
-    this.getCourseData(courseId);
+    await this.getCourseData(courseId);
+    await this.fetchUserInfo();
+    await this.checkAuthorRole();
   },
 
   methods: {
+    async fetchUserInfo() {
+      try {
+        const response = await axios.get("http://localhost:18080/user/info", {
+          headers: {
+            authorization: 'Bearer ' + localStorage.getItem("token")
+          }
+        });
+        this.userId = response.data.uuid;
+        console.log(this.userId);
+      } catch (error) {
+        console.error("Ошибка при получении информации о пользователе:", error);
+      }
+    },
+
+    async checkAuthorRole() {
+      console.log(this.userId);
+
+      if (!this.userId) return;
+      try {
+        const courseId = this.$route.params.id;
+        const response = await axios.get(
+            `http://localhost:1818/course/${courseId}/user/${this.userId}`,
+            {
+              headers: {
+                authorization: 'Bearer ' + localStorage.getItem("token")
+              }
+            }
+        );
+        this.isAuthor = response.data.user_role === 'author';
+      } catch (error) {
+        console.error("Ошибка при проверке роли пользователя:", error);
+        this.isAuthor = false;
+      }
+    },
+
     prepareTestData() {
       if (!this.currentLecture.tests || this.currentLecture.tests.length === 0) {
         return {

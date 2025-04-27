@@ -77,7 +77,7 @@ export default defineComponent({
                 user_uuid: this.userUUID
             }, {
                 headers: {
-                    authorization: 'bearer ' + localStorage.getItem("token"),
+                    authorization: 'Bearer ' + localStorage.getItem("token"),
                 },
             });
             this.username = response.data.user.login

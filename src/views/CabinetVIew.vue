@@ -104,7 +104,7 @@ export default defineComponent({
                 user_uuid: this.userUUID
             }, {
                 headers: {
-                    authorization: 'bearer ' + localStorage.getItem("token"),
+                    authorization: 'Bearer ' + localStorage.getItem("token"),
                 },
             });
             this.username = response.data.user.login
@@ -144,7 +144,7 @@ export default defineComponent({
                     position: this.customer.position,
                 }, {
                     headers: {
-                        authorization: 'bearer ' + localStorage.getItem("token"),
+                        authorization: 'Bearer ' + localStorage.getItem("token"),
                     },
                 });
 
@@ -158,7 +158,7 @@ export default defineComponent({
                     const uploadResponse = await axios.post('http://localhost:18080/user/upload-avatar', formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data',
-                            authorization: 'bearer ' + localStorage.getItem("token"),
+                            authorization: 'Bearer ' + localStorage.getItem("token"),
                         },
                     });
 
