@@ -16,7 +16,7 @@ const routes = [
     { path: '/', component: IndexVue, meta: { requiresAuth: true } },
     { path: '/about', component: AboutSite, meta: { requiresAuth: true } },
     { path: '/courses', component: CoursesView, meta: { requiresAuth: true } },
-    { path: '/lectures', component: LecturesView, meta: { requiresAuth: true } },
+    { path: '/knowledge-base', component: LecturesView, meta: { requiresAuth: true } },
     { path: '/models', component: ModelView, meta: { requiresAuth: true } },
     { path: '/cabinet', component: CabinetVIew, meta: { requiresAuth: true } },
     { path: '/course/create', component: AddCourse, meta: { requiresAuth: false } },
