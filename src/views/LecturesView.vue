@@ -3,8 +3,10 @@
     <div class="container">
       <div class="top-bar">
         <!-- Поиск -->
+        <div class="search-bar">
           <i class="bi bi-search search-icon"></i>
           <input type="text" placeholder="Поиск статей..." class="search-input" />
+        </div>
 
         <!-- Кнопка добавления статьи -->
         <button class="add-article-btn">
