@@ -104,7 +104,7 @@ export default {
     cancelModuleEdit() {
       this.editingModule = null;
     },
-    saveModuleName(module) {
+    saveModuleName() {
       this.editingModule = null;
     },
     openEditLectureModal(lecture) {
@@ -113,7 +113,7 @@ export default {
     cancelLectureEdit() {
       this.editingLecture = null;
     },
-    saveLectureName(lecture) {
+    saveLectureName() {
       this.editingLecture = null;
     }
   }

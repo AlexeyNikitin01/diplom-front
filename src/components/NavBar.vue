@@ -104,7 +104,6 @@
 <script lang="ts">
 import axios from 'axios';
 import { defineComponent } from 'vue';
-import { RouterLink } from 'vue-router';
 
 interface State {
   tokenExist: boolean,

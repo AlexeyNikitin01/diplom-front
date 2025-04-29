@@ -92,7 +92,7 @@ export default {
           excerpt: "Ученые представили революционный композитный материал, который на 30% легче и прочнее существующих аналогов...",
           category: "Материаловедение",
           date: "15 мая 2023",
-          image: "https://images.unsplash.com/photo-1581093196277-1c8d47a119d0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+          image: "https://becker-russia.ru/upload/iblock/e4c/8r08z4c6c73jn41gvvk2dpi474s6b1qs.jpg"
         },
         {
           id: 2,
@@ -128,7 +128,7 @@ export default {
           level: "Продвинутый",
           duration: "12 недель",
           students: "178 студентов",
-          image: "https://images.unsplash.com/photo-1581093057305-25a1a4f56c3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+          image: "https://avatars.mds.yandex.net/i?id=9053c95a38d05d246a0d08eb9257bf060779b688-10241101-images-thumbs&n=13"
         },
         {
           id: 3,
