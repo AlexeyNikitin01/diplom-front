@@ -10,12 +10,14 @@ import LecturesView from "@/views/LecturesView.vue";
 import ModelView from "@/views/ModelView.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import ContactsView from "@/views/ContactsView.vue";
+import MapView from "@/views/MapView.vue";
 
 const routes = [
     { path: '/', component: IndexVue, meta: { requiresAuth: true } },
     { path: '/auth', component: LoginForm },
     { path: '/register', component: RegisterForm },
     { path: '/about', component: AboutSite, meta: { requiresAuth: true } },
+    { path: '/map', component: MapView, meta: { requiresAuth: true } },
     { path: '/courses', component: CoursesView, meta: { requiresAuth: true } },
     { path: '/contacts', component: ContactsView, meta: { requiresAuth: true } },
     { path: '/knowledge-base', component: LecturesView, meta: { requiresAuth: true } },

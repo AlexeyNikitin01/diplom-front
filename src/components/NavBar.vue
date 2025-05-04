@@ -24,6 +24,13 @@
             </router-link>
           </li>
 
+          <li class="nav-item no-wrap">
+            <router-link to="/map" class="nav-link" exact-active-class="active">
+              <i class="bi bi-geo-alt-fill"></i>
+              <span>Карта</span>
+            </router-link>
+          </li>
+
           <li class="nav-item">
             <router-link to="/courses" class="nav-link" exact-active-class="active">
               <i class="bi bi-book-half"></i>
