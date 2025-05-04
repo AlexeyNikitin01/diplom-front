@@ -9,13 +9,15 @@ import IndexVue from "@/views/IndexVue.vue";
 import LecturesView from "@/views/LecturesView.vue";
 import ModelView from "@/views/ModelView.vue";
 import { createRouter, createWebHistory } from "vue-router";
+import ContactsView from "@/views/ContactsView.vue";
 
 const routes = [
+    { path: '/', component: IndexVue, meta: { requiresAuth: true } },
     { path: '/auth', component: LoginForm },
     { path: '/register', component: RegisterForm },
-    { path: '/', component: IndexVue, meta: { requiresAuth: true } },
     { path: '/about', component: AboutSite, meta: { requiresAuth: true } },
     { path: '/courses', component: CoursesView, meta: { requiresAuth: true } },
+    { path: '/contacts', component: ContactsView, meta: { requiresAuth: true } },
     { path: '/knowledge-base', component: LecturesView, meta: { requiresAuth: true } },
     { path: '/models', component: ModelView, meta: { requiresAuth: true } },
     { path: '/cabinet', component: CabinetVIew, meta: { requiresAuth: true } },
