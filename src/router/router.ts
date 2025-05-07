@@ -7,6 +7,7 @@ import CourseView from "@/views/course/CourseView.vue";
 import CoursesView from "@/views/course/CoursesView.vue";
 import IndexVue from "@/views/IndexVue.vue";
 import LecturesView from "@/views/lectures/LecturesView.vue";
+import LectureView from "@/views/lectures/LectureView.vue";
 import ModelView from "@/views/models/ModelView.vue";
 import AiView from "@/views/ais/AiView.vue";
 import { createRouter, createWebHistory } from "vue-router";
@@ -24,6 +25,7 @@ const routes = [
     { path: '/courses', component: CoursesView, meta: { requiresAuth: true } },
     { path: '/contacts', component: ContactsView, meta: { requiresAuth: true } },
     { path: '/knowledge-base', component: LecturesView, meta: { requiresAuth: true } },
+    { path: '/knowledge-base/lectures/:id', component: LectureView, meta: { requiresAuth: true } },
     { path: '/models', component: ModelView, meta: { requiresAuth: true } },
     { path: '/ais', component: AiView, meta: { requiresAuth: true } },
     { path: '/ais', component: ModelView, meta: { requiresAuth: true } },

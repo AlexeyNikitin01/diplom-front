@@ -1,80 +1,51 @@
 <template>
-  <div class="knowledge-base">
-    <div class="container">
-      <div class="top-bar">
-        <!-- Поиск -->
-        <div class="search-bar">
-          <i class="bi bi-search search-icon"></i>
-          <input type="text" placeholder="Поиск статей..." class="search-input" />
+  <div class="lectures-container">
+    <!-- Existing articles section -->
+    <div class="articles-section">
+      <h2>Статьи и материалы</h2>
+      <div class="articles-grid">
+        <div v-for="article in articles" :key="article.id" class="article-card">
+          <div class="article-header">
+            <h3>{{ article.title }}</h3>
+            <div class="article-meta">
+              <span class="article-date">{{ article.date }}</span>
+              <span class="article-views">{{ article.views }}</span>
+              <span class="article-comments">{{ article.comments }} комментариев</span>
+            </div>
+          </div>
+          <p class="article-excerpt">{{ article.excerpt }}</p>
+          <div class="article-footer">
+            <div class="article-tags">
+              <span v-for="tag in article.tags" :key="tag" class="tag">{{ tag }}</span>
+            </div>
+            <div class="article-author">
+              <img :alt="article.author.name" :src="article.author.avatar" class="author-avatar">
+              <span class="author-name">{{ article.author.name }}</span>
+            </div>
+          </div>
         </div>
-
-        <!-- Кнопка добавления статьи -->
-        <button class="add-article-btn">
-          <i class="bi bi-plus-lg"></i> Добавить статью
-        </button>
       </div>
+    </div>
 
-      <div class="articles-container">
-        <!-- Фильтры -->
-        <div class="filters">
-          <button class="filter-btn active">Все статьи</button>
-          <button class="filter-btn">Лабораторные</button>
-          <button class="filter-btn">Лекции</button>
-          <button class="filter-btn">ИИ технологии</button>
-          <button class="filter-btn">3D моделирование</button>
-        </div>
-
-        <!-- Список статей -->
-        <div class="articles-list">
-          <article v-for="article in articles" :key="article.id" class="article-card">
-            <div class="article-header">
-              <router-link :to="`/knowledge-base/${article.id}`" class="article-title">
-                {{ article.title }}
-              </router-link>
-              <div class="article-meta">
-                <span class="meta-item">
-                  <i class="bi bi-calendar"></i>
-                  {{ article.date }}
-                </span>
-                <span class="meta-item">
-                  <i class="bi bi-eye"></i>
-                  {{ article.views }}
-                </span>
-                <span class="meta-item">
-                  <i class="bi bi-chat"></i>
-                  {{ article.comments }}
-                </span>
-              </div>
-            </div>
-
-            <div class="article-content">
-              <p>{{ article.excerpt }}</p>
-            </div>
-
-            <div class="article-footer">
-              <div class="tags">
-                <span v-for="tag in article.tags" :key="tag" class="tag">
-                  {{ tag }}
-                </span>
-              </div>
-              <div class="author">
-                <img :src="article.author.avatar" :alt="article.author.name" class="author-avatar">
-                <span class="author-name">{{ article.author.name }}</span>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <!-- Пагинация -->
-        <div class="pagination">
-          <button class="page-btn active">1</button>
-          <button class="page-btn">2</button>
-          <button class="page-btn">3</button>
-          <span class="page-dots">...</span>
-          <button class="page-btn">10</button>
-          <button class="page-btn next-btn">
-            <i class="bi bi-chevron-right"></i>
-          </button>
+    <div class="lectures-section">
+      <h2>Лекции курсов</h2>
+      <div v-if="loading" class="loading">Загрузка лекций...</div>
+      <div v-else-if="error" class="error">{{ error }}</div>
+      <div v-else class="lectures-grid">
+        <div
+            v-for="lecture in lectures"
+            :key="lecture.id"
+            class="lecture-card"
+            @click="goToLecture(lecture.id)"
+        >
+          <div class="lecture-header">
+            <h3>{{ lecture.title }}</h3>
+            <span class="lecture-module">Модуль {{ lecture.module_id }}</span>
+          </div>
+          <div class="lecture-content-preview">
+            {{ lecture.lecture ? lecture.lecture.substring(0, 100) + '...' : 'Содержание лекции пока недоступно' }}
+          </div>
+          <button class="view-lecture-btn">Перейти к лекции →</button>
         </div>
       </div>
     </div>
@@ -82,6 +53,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -151,259 +124,216 @@ export default {
             avatar: "https://i.pravatar.cc/40?img=5"
           }
         }
-      ]
+      ],
+      lectures: [],
+      loading: false,
+      error: null,
+      tokenExist: !localStorage.getItem("token"),
+    }
+  },
+  async mounted() {
+    await this.fetchLectures();
+  },
+  methods: {
+    async fetchLectures() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await axios.get('http://localhost:1818/course/lectures', {
+          headers: {
+            authorization: 'Bearer ' + localStorage.getItem("token"),
+          },
+        });
+        this.lectures = response.data;
+      } catch (err) {
+        this.error = 'Не удалось загрузить лекции. Пожалуйста, попробуйте позже.';
+        console.error('Error fetching lectures:', err);
+      } finally {
+        this.loading = false;
+      }
+    },
+    goToLecture(lectureId) {
+      this.$router.push(`/knowledge-base/lectures/${lectureId}`);
     }
   }
 }
 </script>
 
 <style scoped>
-.knowledge-base {
-  padding: 2rem 0;
-  background-color: #f9f9f9;
-  min-height: 100vh;
+.lecture-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.container {
+.lecture-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.lecture-content-preview {
+  font-size: 14px;
+  color: #555;
+  margin: 10px 0;
+  height: 60px;
+  overflow: hidden;
+}
+
+.view-lecture-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  color: #3a7bd5;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: right;
+  transition: color 0.3s ease;
+}
+
+.view-lecture-btn:hover {
+  color: #2d62b0;
+}
+.lectures-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 20px;
 }
 
-.page-title {
-  font-size: 2.5rem;
-  margin-bottom: 2rem;
-  color: #333;
-  text-align: center;
+.articles-section, .lectures-section {
+  margin-bottom: 40px;
 }
 
-.filters {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 24px;
 }
 
-.filter-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
+.articles-grid, .lectures-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
-.filter-btn:hover {
-  background: #f0f0f0;
-}
-
-.filter-btn.active {
-  background: #2c3e50;
-  color: white;
-  border-color: #2c3e50;
-}
-
-.articles-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.article-card {
+.article-card, .lecture-card {
   background: white;
   border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.article-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+.article-card:hover, .lecture-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.article-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+.article-header {
+  margin-bottom: 15px;
+}
+
+.article-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
   color: #2c3e50;
-  text-decoration: none;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.article-title:hover {
-  color: #4361ee;
 }
 
 .article-meta {
   display: flex;
-  gap: 1rem;
+  gap: 10px;
+  font-size: 12px;
   color: #7f8c8d;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
 }
 
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.article-content {
-  margin-bottom: 1.5rem;
-  color: #333;
-  line-height: 1.6;
+.article-excerpt {
+  color: #34495e;
+  font-size: 14px;
+  margin-bottom: 15px;
 }
 
 .article-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #eee;
-  padding-top: 1rem;
 }
 
-.tags {
+.article-tags {
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 5px;
 }
 
 .tag {
-  background: #f0f2f5;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  background: #ecf0f1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
   color: #2c3e50;
 }
 
-.author {
+.article-author {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .author-avatar {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  object-fit: cover;
 }
 
 .author-name {
-  font-size: 0.9rem;
+  font-size: 12px;
   color: #2c3e50;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 3rem;
+.lecture-header {
+  margin-bottom: 15px;
 }
 
-.page-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid #ddd;
-  background: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.lecture-header h3 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+  color: #2c3e50;
 }
 
-.page-btn:hover {
-  background: #f0f0f0;
+.lecture-module {
+  font-size: 12px;
+  color: #7f8c8d;
 }
 
-.page-btn.active {
-  background: #2c3e50;
-  color: white;
-  border-color: #2c3e50;
+.lecture-content, .lecture-empty {
+  font-size: 14px;
+  color: #34495e;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
 }
 
-.page-dots {
-  display: flex;
-  align-items: center;
-  padding: 0 0.5rem;
+.lecture-empty {
+  color: #95a5a6;
+  font-style: italic;
 }
 
-.next-btn {
-  width: auto;
-  padding: 0 1rem;
-  border-radius: 20px;
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #7f8c8d;
+}
+
+.error {
+  color: #e74c3c;
+  text-align: center;
+  padding: 20px;
 }
 
 @media (max-width: 768px) {
-  .article-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .author {
-    align-self: flex-end;
+  .articles-grid, .lectures-grid {
+    grid-template-columns: 1fr;
   }
 }
-.search-bar {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  margin-bottom: 2rem;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.8rem 1rem 0.8rem 2.5rem;
-  border: 1px solid #ddd;
-  border-radius: 30px;
-  background: white;
-  font-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.search-input:focus {
-  border-color: #2c3e50;
-  outline: none;
-  box-shadow: 0 0 5px rgba(44, 62, 80, 0.2);
-}
-
-.search-icon {
-  position: absolute;
-  top: 50%;
-  left: 1rem;
-  transform: translateY(-50%);
-  color: #7f8c8d;
-  font-size: 1.2rem;
-}
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.add-article-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #2c3e50;
-  color: white;
-  border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 30px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-}
-
-.add-article-btn:hover {
-  background: #4361ee;
-  transform: translateY(-2px);
-}
-
 </style>
