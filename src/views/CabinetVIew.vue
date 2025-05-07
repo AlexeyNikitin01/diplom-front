@@ -36,9 +36,6 @@
         <div class="progress-cards">
           <div class="progress-card">
             <h3>Лабораторные работы</h3>
-            <div class="chart-container">
-              <DoughnutChart :chartData="labsChartData" :options="chartOptions" />
-            </div>
             <div class="progress-stats">
               <div class="progress-stat">
                 <span class="stat-color completed"></span>
@@ -57,9 +54,6 @@
 
           <div class="progress-card">
             <h3>Курсы</h3>
-            <div class="chart-container">
-              <DoughnutChart :chartData="coursesChartData" :options="chartOptions" />
-            </div>
             <div class="progress-stats">
               <div class="progress-stat">
                 <span class="stat-color completed"></span>
@@ -96,6 +90,28 @@
             </div>
             <div v-if="lab.status !== 'completed'" class="progress-bar">
               <div class="progress-fill" :style="{ width: lab.progress + '%' }"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="labs-section">
+        <h2><i class="fas fa-flask"></i> Последние курсы</h2>
+        <div class="labs-grid">
+          <div v-for="course in courses" :key="course.id" class="lab-card" :class="course.status">
+            <div class="lab-header">
+              <h3>{{ course.title }}</h3>
+              <span class="lab-status">{{ formatStatus(course.status) }}</span>
+            </div>
+            <div class="lab-image">
+              <img :src="course.image" :alt="course.title">
+            </div>
+            <div class="lab-meta">
+              <span class="lab-date"><i class="far fa-calendar-alt"></i> {{ course.completionDate }}</span>
+              <span class="lab-score"><i class="fas fa-star"></i> Оценка: {{ course.score }}/10</span>
+            </div>
+            <div v-if="course.status !== 'completed'" class="progress-bar">
+              <div class="progress-fill" :style="{ width: course.progress + '%' }"></div>
             </div>
           </div>
         </div>
@@ -195,9 +211,6 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 export default {
   name: 'UserCabinet',
-  components: {
-    DoughnutChart: Doughnut
-  },
   data() {
     return {
       showModal: false,
@@ -210,7 +223,7 @@ export default {
         surname: 'Петров',
         email: 'ivan.petrov@example.com',
         phone: '+7 (912) 345-67-89',
-        place_work: 'МГТУ им. Н.Э. Баумана',
+        place_work: '',
         position: 'Студент',
         photo: 'https://randomuser.me/api/portraits/men/32.jpg',
         photo_64: ''
@@ -255,24 +268,24 @@ export default {
         }
       ],
       courses: [
-        { id: 1, title: 'Основы материаловедения', status: 'completed' },
-        { id: 2, title: 'Металловедение', status: 'completed' },
-        { id: 3, title: 'Полимерные материалы', status: 'in-progress' },
-        { id: 4, title: 'Композиционные материалы', status: 'not-started' },
-        { id: 5, title: 'Коррозия и защита металлов', status: 'not-started' }
+        { id: 1, title: 'Основы материаловедения', status: 'completed', image: 'https://avatars.mds.yandex.net/i?id=7ee0c435fd91f8c0a01cde1e305847b9_l-7760894-images-thumbs&n=13'},
+        { id: 2, title: 'Металловедение', status: 'completed',image: 'https://avatars.mds.yandex.net/i?id=7ee0c435fd91f8c0a01cde1e305847b9_l-7760894-images-thumbs&n=13' },
+        { id: 3, title: 'Полимерные материалы', status: 'in-progress',image: 'https://pic.rutubelist.ru/video/15/ee/15ee00b712e9a228a5e0dbb98d2f8e65.jpg' },
+        { id: 4, title: 'Композиционные материалы', status: 'not-started',image: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80' },
+        { id: 5, title: 'Коррозия и защита металлов', status: 'not-started',image: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80' }
       ],
       certificates: [
         {
           id: 1,
           title: 'Основы материаловедения',
           issueDate: '10.10.2023',
-          image: 'https://via.placeholder.com/300x200?text=Сертификат+1'
+          image: 'https://avatars.mds.yandex.net/i?id=ac68c741e57bfd1115ce589a8e85e82212ff6659-5320579-images-thumbs&n=13'
         },
         {
           id: 2,
           title: 'Металловедение',
           issueDate: '25.10.2023',
-          image: 'https://via.placeholder.com/300x200?text=Сертификат+2'
+          image: 'https://avatars.mds.yandex.net/i?id=ac68c741e57bfd1115ce589a8e85e82212ff6659-5320579-images-thumbs&n=13'
         }
       ],
       chartOptions: {
