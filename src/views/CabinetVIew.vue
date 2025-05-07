@@ -3,14 +3,14 @@
     <!-- Шапка личного кабинета -->
     <div class="profile-header">
       <div class="profile-avatar">
-        <img :src="user.photo || 'https://via.placeholder.com/150'" alt="Аватар" class="avatar-img">
+        <img :src="user.photo || 'https://sun1-94.userapi.com/impg/q6HYHkaQrpExEPgVMMFux9V7U0oJvBAiWHjyPg/9iXGSerHuTU.jpg?size=2560x1707&quality=96&sign=865ee02078f2aae358a009124b386aae&type=album'" alt="Аватар" class="avatar-img">
         <button class="edit-profile-btn" @click="showModal = true">
           <i class="fas fa-edit"></i> Редактировать профиль
         </button>
       </div>
       <div class="profile-info">
         <h1>{{ user.name }} {{ user.surname }}</h1>
-        <p class="text-muted">{{ user.position }} в {{ user.place_work }}</p>
+        <p class="text-muted">{{ user.position }} {{ user.place_work }}</p>
         <div class="profile-stats">
           <div class="stat-item">
             <i class="fas fa-flask"></i>
@@ -219,13 +219,13 @@ export default {
       user: {
         uuid: '123e4567-e89b-12d3-a456-426614174000',
         login: 'materials_science_student',
-        name: 'Иван',
-        surname: 'Петров',
+        name: 'Алексей',
+        surname: 'Никитин',
         email: 'ivan.petrov@example.com',
         phone: '+7 (912) 345-67-89',
         place_work: '',
         position: 'Студент',
-        photo: 'https://randomuser.me/api/portraits/men/32.jpg',
+        photo: 'https://sun1-94.userapi.com/impg/q6HYHkaQrpExEPgVMMFux9V7U0oJvBAiWHjyPg/9iXGSerHuTU.jpg?size=2560x1707&quality=96&sign=865ee02078f2aae358a009124b386aae&type=album',
         photo_64: ''
       },
       // Фейковые данные для демонстрации
