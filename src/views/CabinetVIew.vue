@@ -3,14 +3,14 @@
     <!-- Шапка личного кабинета -->
     <div class="profile-header">
       <div class="profile-avatar">
-        <img :src="user.photo || 'https://sun1-94.userapi.com/impg/q6HYHkaQrpExEPgVMMFux9V7U0oJvBAiWHjyPg/9iXGSerHuTU.jpg?size=2560x1707&quality=96&sign=865ee02078f2aae358a009124b386aae&type=album'" alt="Аватар" class="avatar-img">
+        <img :src="photoUrl || customer.photo_64 ? `data:image/png;base64,${customer.photo_64}` : 'https://sun1-94.userapi.com/impg/q6HYHkaQrpExEPgVMMFux9V7U0oJvBAiWHjyPg/9iXGSerHuTU.jpg?size=2560x1707&quality=96&sign=865ee02078f2aae358a009124b386aae&type=album'" alt="Аватар" class="avatar-img">
         <button class="edit-profile-btn" @click="showModal = true">
           <i class="fas fa-edit"></i> Редактировать профиль
         </button>
       </div>
       <div class="profile-info">
-        <h1>{{ user.name }} {{ user.surname }}</h1>
-        <p class="text-muted">{{ user.position }} {{ user.place_work }}</p>
+        <h1>{{ customer.name }} {{ customer.surname }}</h1>
+        <p class="text-muted">{{ customer.position }} в {{ customer.place_work }}</p>
         <div class="profile-stats">
           <div class="stat-item">
             <i class="fas fa-flask"></i>
@@ -76,7 +76,7 @@
       <div class="labs-section">
         <h2><i class="fas fa-flask"></i> Последние лабораторные работы</h2>
         <div class="labs-grid">
-          <div v-for="lab in recentLabs" :key="lab.id" class="lab-card" :class="lab.status">
+          <div v-for="lab in labs" :key="lab.id" class="lab-card" :class="lab.status">
             <div class="lab-header">
               <h3>{{ lab.title }}</h3>
               <span class="lab-status">{{ formatStatus(lab.status) }}</span>
@@ -153,7 +153,7 @@
         <form @submit.prevent="updateUser" class="modal-form">
           <div class="form-group avatar-upload">
             <div class="avatar-preview">
-              <img :src="photoUrl || user.photo || 'https://via.placeholder.com/150'" alt="Аватар">
+              <img :src="photoUrl || customer.photo_64 ? `data:image/png;base64,${customer.photo_64}` : 'https://via.placeholder.com/150'" alt="Аватар">
             </div>
             <label class="upload-btn">
               <input type="file" @change="onFileChange" accept="image/*">
@@ -163,33 +163,42 @@
 
           <div class="form-row">
             <div class="form-group">
+              <label>Логин</label>
+              <input type="text" v-model="customer.login" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
               <label>Имя</label>
-              <input type="text" v-model="user.name">
+              <input type="text" v-model="customer.name">
             </div>
             <div class="form-group">
               <label>Фамилия</label>
-              <input type="text" v-model="user.surname">
+              <input type="text" v-model="customer.surname">
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" v-model="user.email">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" v-model="customer.email">
+            </div>
+            <div class="form-group">
+              <label>Телефон</label>
+              <input type="tel" v-model="customer.phone">
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Телефон</label>
-            <input type="tel" v-model="user.phone">
-          </div>
-
-          <div class="form-group">
-            <label>Место работы</label>
-            <input type="text" v-model="user.place_work">
-          </div>
-
-          <div class="form-group">
-            <label>Должность</label>
-            <input type="text" v-model="user.position">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Место работы</label>
+              <input type="text" v-model="customer.place_work">
+            </div>
+            <div class="form-group">
+              <label>Должность</label>
+              <input type="text" v-model="customer.position">
+            </div>
           </div>
 
           <div class="form-actions">
@@ -202,31 +211,81 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
+import axios from 'axios';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import { Doughnut } from 'vue-chartjs'
-import axios from 'axios'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-export default {
+interface State {
+  tokenExist: boolean,
+  userUUID: string | null,
+  username: string,
+  photoUrl: string,
+  selectedFile: File | null,
+  showModal: boolean,
+  customer: {
+    uuid: string
+    login: string
+    name: string
+    surname: string
+    email: string
+    phone: string
+    place_work: string
+    position: string
+    photo: string
+    photo_64: string
+  },
+  // Фейковые данные для демонстрации
+  labs: Array<{
+    id: number
+    title: string
+    status: string
+    completionDate: string
+    score: number | null
+    progress: number
+    image: string
+  }>,
+  courses: Array<{
+    id: number
+    title: string
+    status: string
+    image: string
+    completionDate: string
+    score: number | null
+    progress: number
+  }>,
+  certificates: Array<{
+    id: number
+    title: string
+    issueDate: string
+    image: string
+  }>
+}
+
+export default defineComponent({
   name: 'UserCabinet',
-  data() {
+
+  data(): State {
     return {
-      showModal: false,
+      tokenExist: !localStorage.getItem("token"),
+      userUUID: localStorage.getItem("userUUID"),
+      username: "",
       photoUrl: '',
       selectedFile: null,
-      user: {
-        uuid: '123e4567-e89b-12d3-a456-426614174000',
-        login: 'materials_science_student',
-        name: 'Алексей',
-        surname: 'Никитин',
-        email: 'ivan.petrov@example.com',
-        phone: '+7 (912) 345-67-89',
+      showModal: false,
+      customer: {
+        uuid: '',
+        login: '',
+        name: '',
+        surname: '',
+        email: '',
+        phone: '',
         place_work: '',
-        position: 'Студент',
-        photo: 'https://sun1-94.userapi.com/impg/q6HYHkaQrpExEPgVMMFux9V7U0oJvBAiWHjyPg/9iXGSerHuTU.jpg?size=2560x1707&quality=96&sign=865ee02078f2aae358a009124b386aae&type=album',
-        photo_64: ''
+        position: '',
+        photo: '',
+        photo_64: '',
       },
       // Фейковые данные для демонстрации
       labs: [
@@ -268,11 +327,51 @@ export default {
         }
       ],
       courses: [
-        { id: 1, title: 'Основы материаловедения', status: 'completed', image: 'https://avatars.mds.yandex.net/i?id=7ee0c435fd91f8c0a01cde1e305847b9_l-7760894-images-thumbs&n=13'},
-        { id: 2, title: 'Металловедение', status: 'completed',image: 'https://avatars.mds.yandex.net/i?id=7ee0c435fd91f8c0a01cde1e305847b9_l-7760894-images-thumbs&n=13' },
-        { id: 3, title: 'Полимерные материалы', status: 'in-progress',image: 'https://pic.rutubelist.ru/video/15/ee/15ee00b712e9a228a5e0dbb98d2f8e65.jpg' },
-        { id: 4, title: 'Композиционные материалы', status: 'not-started',image: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80' },
-        { id: 5, title: 'Коррозия и защита металлов', status: 'not-started',image: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80' }
+        {
+          id: 1,
+          title: 'Основы материаловедения',
+          status: 'completed',
+          image: 'https://avatars.mds.yandex.net/i?id=7ee0c435fd91f8c0a01cde1e305847b9_l-7760894-images-thumbs&n=13',
+          completionDate: '10.10.2023',
+          score: 9,
+          progress: 100
+        },
+        {
+          id: 2,
+          title: 'Металловедение',
+          status: 'completed',
+          image: 'https://avatars.mds.yandex.net/i?id=7ee0c435fd91f8c0a01cde1e305847b9_l-7760894-images-thumbs&n=13',
+          completionDate: '25.10.2023',
+          score: 8,
+          progress: 100
+        },
+        {
+          id: 3,
+          title: 'Полимерные материалы',
+          status: 'in-progress',
+          image: 'https://pic.rutubelist.ru/video/15/ee/15ee00b712e9a228a5e0dbb98d2f8e65.jpg',
+          completionDate: 'В процессе',
+          score: null,
+          progress: 65
+        },
+        {
+          id: 4,
+          title: 'Композиционные материалы',
+          status: 'not-started',
+          image: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+          completionDate: 'Не начат',
+          score: null,
+          progress: 0
+        },
+        {
+          id: 5,
+          title: 'Коррозия и защита металлов',
+          status: 'not-started',
+          image: 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+          completionDate: 'Не начат',
+          score: null,
+          progress: 0
+        }
       ],
       certificates: [
         {
@@ -287,125 +386,143 @@ export default {
           issueDate: '25.10.2023',
           image: 'https://avatars.mds.yandex.net/i?id=ac68c741e57bfd1115ce589a8e85e82212ff6659-5320579-images-thumbs&n=13'
         }
-      ],
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        }
-      }
+      ]
     }
   },
   computed: {
     // Статистика по лабораторным работам
-    completedLabsCount() {
+    completedLabsCount(): number {
       return this.labs.filter(lab => lab.status === 'completed').length
     },
-    inProgressLabsCount() {
+    inProgressLabsCount(): number {
       return this.labs.filter(lab => lab.status === 'in-progress').length
     },
-    notStartedLabsCount() {
+    notStartedLabsCount(): number {
       return this.labs.filter(lab => lab.status === 'not-started').length
     },
-    totalLabsCount() {
+    totalLabsCount(): number {
       return this.labs.length
     },
 
     // Статистика по курсам
-    completedCoursesCount() {
+    completedCoursesCount(): number {
       return this.courses.filter(course => course.status === 'completed').length
     },
-    inProgressCoursesCount() {
+    inProgressCoursesCount(): number {
       return this.courses.filter(course => course.status === 'in-progress').length
     },
-    notStartedCoursesCount() {
+    notStartedCoursesCount(): number {
       return this.courses.filter(course => course.status === 'not-started').length
     },
-    totalCoursesCount() {
+    totalCoursesCount(): number {
       return this.courses.length
     },
+  },
+  async mounted() {
+    try {
+      const response = await axios.post('http://localhost:18080/user/get-user', {
+        user_uuid: this.userUUID
+      }, {
+        headers: {
+          authorization: 'Bearer ' + localStorage.getItem("token"),
+        },
+      });
+      this.username = response.data.user.login
+      this.customer = response.data.user
+      this.customer.photo = response.data.user.url
+      this.customer.photo_64 = response.data.avatar
+    } catch (error) {
+      console.error('Error getting user data:', error);
+    }
 
-    // Последние лабораторные работы (3 шт)
-    recentLabs() {
-      return [...this.labs].sort((a, b) => {
-        if (a.status === 'completed' && b.status !== 'completed') return -1
-        if (a.status !== 'completed' && b.status === 'completed') return 1
-        return 0
-      }).slice(0, 3)
-    },
-
-    // Данные для круговых диаграмм
-    labsChartData() {
-      return {
-        labels: ['Завершено', 'В процессе', 'Не начато'],
-        datasets: [
-          {
-            backgroundColor: ['#4CAF50', '#FF9800', '#F44336'],
-            data: [this.completedLabsCount, this.inProgressLabsCount, this.notStartedLabsCount]
-          }
-        ]
-      }
-    },
-    coursesChartData() {
-      return {
-        labels: ['Завершено', 'В процессе', 'Не начато'],
-        datasets: [
-          {
-            backgroundColor: ['#4CAF50', '#FF9800', '#F44336'],
-            data: [this.completedCoursesCount, this.inProgressCoursesCount, this.notStartedCoursesCount]
-          }
-        ]
-      }
+    if (this.customer.photo) {
+      this.photoUrl = this.customer.photo;
     }
   },
   methods: {
-    formatStatus(status) {
-      const statusMap = {
+    formatStatus(status: string): string {
+      const statusMap: Record<string, string> = {
         'completed': 'Завершено',
         'in-progress': 'В процессе',
         'not-started': 'Не начато'
       }
       return statusMap[status] || status
     },
-    onFileChange(event) {
-      const file = event.target.files[0]
-      if (file) {
-        this.selectedFile = file
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          this.photoUrl = e.target.result
-        }
-        reader.readAsDataURL(file)
+    // Обработка изменения файла
+    onFileChange(event: Event) {
+      const fileInput = event.target as HTMLInputElement;
+      if (fileInput.files && fileInput.files.length > 0) {
+        this.selectedFile = fileInput.files[0];
+        this.previewImage(this.selectedFile);
       }
     },
+
+    // Отправка обновленного профиля
     async updateUser() {
       try {
-        // Здесь будет логика обновления данных пользователя
-        console.log('Updating user:', this.user)
+        // Обновляем данные пользователя
+        const userResponse = await axios.post('http://localhost:18080/user/update-user', {
+          user_uuid: this.userUUID,
+          login: this.customer.login,
+          name: this.customer.name,
+          surname: this.customer.surname,
+          email: this.customer.email,
+          phone: this.customer.phone,
+          place_work: this.customer.place_work,
+          position: this.customer.position,
+        }, {
+          headers: {
+            authorization: 'Bearer ' + localStorage.getItem("token"),
+          },
+        });
 
+        // Если выбран файл, загружаем его
         if (this.selectedFile) {
-          // Логика загрузки фото
-          console.log('Uploading photo...')
-          // Имитация загрузки
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          this.user.photo = this.photoUrl
+          const formData = new FormData();
+          formData.append('file', this.selectedFile);
+          formData.append('user_uuid', this.userUUID!);
+
+          // Отправляем файл на сервер
+          const uploadResponse = await axios.post('http://localhost:18080/user/upload-avatar', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              authorization: 'Bearer ' + localStorage.getItem("token"),
+            },
+          });
+
+          if (uploadResponse.data.url !== "") {
+            // Обновляем URL фото на странице
+            this.photoUrl = uploadResponse.data.url;
+          }
+
+          if (uploadResponse.data.img !== "") {
+            // Обновляем локальное фото на странице
+            this.customer.photo_64 = uploadResponse.data.img;
+          }
         }
 
-        this.showModal = false
-        alert('Профиль успешно обновлен!')
+        this.showModal = false;
+        alert('Профиль успешно обновлен!');
       } catch (error) {
-        console.error('Error updating user:', error)
-        alert('Ошибка при обновлении профиля')
+        console.error('Error updating user:', error);
+        alert('Ошибка при обновлении профиля');
       }
     },
-    viewCertificate(cert) {
-      alert(`Просмотр сертификата: ${cert.title}`)
+
+    // Предпросмотр загруженного изображения
+    previewImage(file: File) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.photoUrl = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    },
+
+    viewCertificate(cert: { title: string }) {
+      alert(`Просмотр сертификата: ${cert.title}`);
     }
   }
-}
+});
 </script>
 
 <style scoped>
