@@ -323,7 +323,7 @@ export default defineComponent({
           completionDate: 'В процессе',
           score: null,
           progress: 30,
-          image: 'https://images.unsplash.com/photo-1584735422188-7199a00030d0?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80'
+          image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80'
         }
       ],
       courses: [
