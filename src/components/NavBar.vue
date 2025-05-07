@@ -59,13 +59,13 @@
                 </router-link>
               </li>
               <li>
-                <router-link to="/ai" class="dropdown-item">
+                <router-link to="/ais" class="dropdown-item">
                   <i class="bi bi-robot"></i>
                   <span>ИИ технологии</span>
                 </router-link>
               </li>
               <li>
-                <router-link to="/3d" class="dropdown-item">
+                <router-link to="/models" class="dropdown-item">
                   <i class="bi bi-box-seam"></i>
                   <span>3D моделирование</span>
                 </router-link>
