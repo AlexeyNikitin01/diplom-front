@@ -1,6 +1,6 @@
 <script lang="ts">
 import axios from "axios";
-import { defineComponent } from "vue";
+import {defineComponent} from "vue";
 
 export default defineComponent({
   data() {
@@ -15,7 +15,9 @@ export default defineComponent({
     }
   },
   async created() {
-    const lectureId = this.$route.params.id;
+    const lectureId = Array.isArray(this.$route.params.id)
+        ? this.$route.params.id[0]
+        : this.$route.params.id;
     await this.fetchLecture(lectureId);
   },
   methods: {
@@ -52,7 +54,7 @@ export default defineComponent({
     <div v-else-if="error" class="lecture-error">
       <i class="fas fa-exclamation-triangle"></i>
       <p>{{ error }}</p>
-      <button @click="fetchLecture($route.params.id)" class="retry-btn">
+      <button class="retry-btn" @click="fetchLecture($route.params.id)">
         Попробовать снова
       </button>
     </div>
@@ -61,8 +63,10 @@ export default defineComponent({
     <div v-else class="lecture-content">
       <div class="lecture-header">
         <div class="lecture-breadcrumbs">
-          <router-link to="/courses">Курсы</router-link> /
-          <router-link :to="`/modules/${lecture.module_id}`">Модуль {{ lecture.module_id }}</router-link> /
+          <router-link to="/courses">Курсы</router-link>
+          /
+          <router-link :to="`/modules/${lecture.module_id}`">Модуль {{ lecture.module_id }}</router-link>
+          /
           <span>Лекция</span>
         </div>
 
@@ -119,8 +123,12 @@ export default defineComponent({
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Стили для состояния ошибки */
