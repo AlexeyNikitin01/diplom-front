@@ -6,7 +6,7 @@
       <div v-for="course in courses" :key="course.id" class="col-md-6 col-lg-4 mb-4">
         <div class="card shadow-sm h-100 course-card">
           <div class="card-img-container">
-            <img :src="course.photo_url" class="card-img-top" alt="Course Image"
+            <img :src="`https://koriphey.ru/site/assets/files/6927/ege-v-tcifre-koriphey-gymnasy.0x900.jpg`" class="card-img-top" alt="Course Image"
                  @error="handleImageError" v-bind:class="{ 'img-error': !course.photo_url_loaded }">
             <div v-if="!course.photo_url_loaded" class="img-placeholder d-flex align-items-center justify-content-center">
               <i class="fas fa-book-open fa-3x text-muted"></i>
