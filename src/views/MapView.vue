@@ -33,6 +33,7 @@
 <script setup>
 /* global ymaps */
 import { onMounted } from 'vue'
+import axios from "axios";
 
 const regions = [
   { name: 'Республика Адыгея', center: [44.609826, 40.100683] },
@@ -128,7 +129,7 @@ const fakeData = [
     color: '#ff4d4d', // Цвет для завода
     icon: 'https://img.icons8.com/ios/452/factory.png', // Иконка завода
     description: 'Завод Сатурн в Рыбинске специализируется на производстве авиационных двигателей и сложных механических компонентов для различных отраслей промышленности.',
-    vacancies: ['Инженер', 'Оператор станков', 'Техник по обслуживанию оборудования'], // Вакансии на заводе
+    vacancies: [], // Вакансии на заводе
     image: 'https://avatars.mds.yandex.net/i?id=45d8a193ba0beda37b39f83a7ca2a1ce_l-5349316-images-thumbs&n=13' // Изображение завода
   }
 ];
@@ -159,7 +160,25 @@ regions.forEach(region => {
   }
 });
 
+// Функция для загрузки вакансий
+async function fetchVacancies() {
+  try {
+    const response = await axios.get(`http://localhost:2828/map/vacancies/одк сатурн`, {
+      headers: {
+        authorization: 'Bearer ' + localStorage.getItem("token"),
+      },
+    });
+
+    const items = response.data.data.items; // Достаем массив вакансий
+    fakeData[0].vacancies = items.map(item => item.name); // Извлекаем названия
+  } catch (error) {
+    console.error('Ошибка при загрузке вакансий:', error);
+  }
+}
+
+
 onMounted(() => {
+  fetchVacancies();
   ymaps.ready(async () => {
     const map = new ymaps.Map('map', {
       center: [61.524, 105.3188],
