@@ -1,5 +1,7 @@
 # diplom-front
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/AlexeyNikitin01/diplom-front)
+
 ## Project setup
 ```
 npm install
