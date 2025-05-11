@@ -28,6 +28,7 @@
     "marked": "^15.0.11",
     "mathjs": "^14.4.0",
     "plotly.js-dist-min": "^3.0.1",
+    "three": "^0.176.0",
     "uuid": "^11.1.0",
     "vue": "^3.2.13",
     "vue-awesome-paginate": "^1.2.0",
