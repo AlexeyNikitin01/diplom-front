@@ -112,6 +112,15 @@
               :style="{ width: lab.progress + '%' }"
           ></div>
         </div>
+
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title font-weight-bold">{{ lab.name }}</h5>
+          <p class="card-text text-muted mb-3 flex-grow-1">{{ lab.description || 'Описание отсутствует' }}</p>
+          <button class="btn btn-primary btn-block mt-auto" @click="viewLab(lab.id)">
+            <i class="fas fa-info-circle mr-2"></i>Подробнее
+          </button>
+        </div>
+
       </div>
     </div>
 
@@ -470,7 +479,10 @@ export default {
     formatDate(dateString) {
       const options = { year: 'numeric', month: 'long', day: 'numeric' }
       return new Date(dateString).toLocaleDateString('ru-RU', options)
-    }
+    },
+    viewLab(labID) {
+      this.$router.push(`/labs/${labID}`);
+    },
   }
 }
 </script>

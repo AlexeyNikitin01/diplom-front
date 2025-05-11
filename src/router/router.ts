@@ -14,6 +14,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import ContactsView from "@/views/ContactsView.vue";
 import MapView from "@/views/MapView.vue";
 import LabsView from "@/views/labs/LabsView.vue";
+import LabView from "@/views/labs/LabView.vue";
 
 const routes = [
     { path: '/', component: IndexVue, meta: { requiresAuth: true } },
@@ -22,13 +23,13 @@ const routes = [
     { path: '/about', component: AboutSite, meta: { requiresAuth: true } },
     { path: '/map', component: MapView, meta: { requiresAuth: true } },
     { path: '/labs', component: LabsView, meta: { requiresAuth: true } },
+    { path: '/labs/:id', component: LabView, meta: { requiresAuth: true } },
     { path: '/courses', component: CoursesView, meta: { requiresAuth: true } },
     { path: '/contacts', component: ContactsView, meta: { requiresAuth: true } },
     { path: '/knowledge-base', component: LecturesView, meta: { requiresAuth: true } },
     { path: '/knowledge-base/lectures/:id', component: LectureView, meta: { requiresAuth: true } },
     { path: '/models', component: ModelView, meta: { requiresAuth: true } },
     { path: '/ais', component: AiView, meta: { requiresAuth: true } },
-    { path: '/ais', component: ModelView, meta: { requiresAuth: true } },
     { path: '/cabinet', component: CabinetVIew, meta: { requiresAuth: true } },
     { path: '/course/create', component: AddCourse, meta: { requiresAuth: false } },
     { path: '/course/:id', component: CourseView, meta: { requiresAuth: false } },
