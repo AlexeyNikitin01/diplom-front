@@ -2,6 +2,47 @@
   <div class="container mt-5">
     <h3 class="display-4 text-center mb-5">Список курсов</h3>
 
+    <!-- Добавленный блок поиска и фильтров -->
+    <div class="row mb-4">
+      <div class="col-md-8 mb-3 mb-md-0">
+        <div class="input-group shadow-sm">
+          <div class="input-group-prepend">
+            <span class="input-group-text bg-white border-right-0">
+              <i class="fas fa-search text-muted"></i>
+            </span>
+          </div>
+          <input
+              type="text"
+              class="form-control border-left-0"
+              placeholder="Поиск курсов..."
+              v-model="searchQuery"
+              @input="handleSearch"
+          >
+            <button
+                class="btn"
+                type="button"
+                @click="clearSearch"
+            >
+              Очистить
+            </button>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select
+            class="form-control shadow-sm"
+            v-model="selectedMaterial"
+            @change="filterByMaterial"
+        >
+          <option value="">Все материалы</option>
+          <option value="Металлы">Металлы</option>
+          <option value="Полимеры">Полимеры</option>
+          <option value="Керамика">Керамика</option>
+          <option value="Композиты">Композиты</option>
+        </select>
+      </div>
+    </div>
+    <!-- Конец добавленного блока -->
+
     <div class="row">
       <div v-for="course in courses" :key="course.id" class="col-md-6 col-lg-4 mb-4">
         <div class="card shadow-sm h-100 course-card">
@@ -47,14 +88,19 @@
 
 <script>
 import axios from "axios";
+import _ from 'lodash';
 
 export default {
   data() {
     return {
       courses: [],
-      limit: 9, // Изменил на 9 для красивого отображения 3 колонок
+      limit: 9,
       offset: 0,
       total: 0,
+      // Добавленные данные для поиска и фильтров
+      searchQuery: '',
+      selectedMaterial: '',
+      allCourses: [], // Для хранения всех курсов без фильтрации
     };
   },
   computed: {
@@ -77,8 +123,11 @@ export default {
           }
         });
 
+        // Сохраняем все курсы для фильтрации
+        this.allCourses = response.data.courses;
+
         // Добавляем флаг для отслеживания загрузки изображений
-        this.courses = response.data.courses.map(course => ({
+        this.courses = this.allCourses.map(course => ({
           ...course,
           photo_url_loaded: true
         }));
@@ -87,6 +136,45 @@ export default {
         console.error("Ошибка при получении курсов:", error);
       }
     },
+    // Добавленные методы для поиска и фильтрации
+    handleSearch: _.debounce(function() {
+      this.applyFilters();
+    }, 300),
+
+    filterByMaterial() {
+      this.applyFilters();
+    },
+
+    applyFilters() {
+      let filtered = [...this.allCourses];
+
+      // Фильтрация по поисковому запросу
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(course =>
+            course.name.toLowerCase().includes(query) ||
+            (course.description && course.description.toLowerCase().includes(query))
+        );
+      }
+
+      // Фильтрация по материаловедению
+      if (this.selectedMaterial) {
+        filtered = filtered.filter(course =>
+            course.tags && course.tags.includes(this.selectedMaterial)
+        );
+      }
+
+      this.courses = filtered.slice(0, this.limit);
+      this.total = filtered.length;
+      this.offset = 0;
+    },
+
+    clearSearch() {
+      this.searchQuery = '';
+      this.selectedMaterial = '';
+      this.applyFilters();
+    },
+
     handleImageError(event) {
       const courseId = event.target.dataset.id;
       const course = this.courses.find(c => c.id == courseId);
@@ -249,5 +337,79 @@ body {
 .page-item.disabled .page-link:hover {
   background-color: #f8f9fa;
   color: #6c757d;
+}
+/* Добавленные стили для поиска и фильтров */
+.search-filter-container {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.input-group-text {
+  background-color: #fff;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  color: #6c757d;
+}
+
+.form-control {
+  border: none;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  box-shadow: none;
+}
+
+.form-control:focus {
+  box-shadow: none;
+}
+
+.input-group-append .btn {
+  background-color: #f1f3f5;
+  border: none;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+
+.input-group-append .btn:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+select.form-control {
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1.25rem;
+  height: auto;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+select.form-control:focus {
+  border-color: #3a7bd5;
+  box-shadow: 0 0 0 0.2rem rgba(58, 123, 213, 0.15);
+}
+
+/* Адаптивные стили */
+@media (max-width: 767.98px) {
+  .search-filter-container {
+    padding: 1rem;
+  }
+
+  .input-group-text,
+  .form-control,
+  select.form-control {
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+  }
 }
 </style>
