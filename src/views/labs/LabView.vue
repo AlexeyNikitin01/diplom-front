@@ -6,7 +6,7 @@
       <h1>{{ lab.title }}</h1>
 
       <div class="edit-toggle">
-        <button @click="toggleEditMode">
+        <button @click="toggleEditMode" class="edit-btn">
           {{ editing ? 'Закрыть редактор' : 'Редактировать' }}
         </button>
       </div>
@@ -29,7 +29,49 @@
         <h2>Формула:</h2>
         <div class="formula-display" v-html="renderedFormula"></div>
 
-        <!-- Редактирование формулы (только в режиме редактирования) -->
+        <div class="formula-controls">
+          <!-- Блок ввода переменных и результата -->
+          <div class="variables-result-container">
+            <div class="formula-variables" v-if="hasVariables">
+              <h3>Введите значения:</h3>
+              <div class="variable-input" v-for="(value, varName) in variables" :key="varName">
+                <label>{{ varName }} =</label>
+                <input
+                    type="number"
+                    v-model.number="variables[varName]"
+                    @input="calculateResult"
+                    step="any"
+                >
+              </div>
+              <div class="formula-result" v-if="calculationResult !== null">
+                <h3>Результат:</h3>
+                <div class="result-value">{{ calculationResult }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- График -->
+          <div class="formula-graph" v-if="showGraph">
+            <h3>График функции:</h3>
+            <div class="graph-controls">
+              <div class="range-control">
+                <label>X min:</label>
+                <input type="number" v-model.number="graphRange.xmin" @change="updateGraph">
+              </div>
+              <div class="range-control">
+                <label>X max:</label>
+                <input type="number" v-model.number="graphRange.xmax" @change="updateGraph">
+              </div>
+              <div class="range-control">
+                <label>Шаг:</label>
+                <input type="number" v-model.number="graphRange.step" @change="updateGraph" step="0.1" min="0.1">
+              </div>
+            </div>
+            <div ref="graphContainer" class="graph-container"></div>
+          </div>
+        </div>
+
+        <!-- Редактор формулы (только в режиме редактирования) -->
         <div v-if="editing" class="formula-edit-container">
           <div class="formula-edit">
             <textarea v-model="editableFormula" @input="updatePreview"></textarea>
@@ -40,6 +82,7 @@
 
           <div class="formula-tools">
             <div class="formula-buttons">
+              <h4>Добавить символ:</h4>
               <button
                   v-for="symbol in formulaSymbols"
                   :key="symbol"
@@ -49,24 +92,6 @@
                 {{ symbol }}
               </button>
             </div>
-
-            <div class="formula-variables" v-if="hasVariables">
-              <h3>Подставить значения:</h3>
-              <div class="variable-input" v-for="(value, varName) in variables" :key="varName">
-                <label>{{ varName }} =</label>
-                <input
-                    type="number"
-                    v-model.number="variables[varName]"
-                    @input="updateGraph"
-                    step="any"
-                >
-              </div>
-            </div>
-          </div>
-
-          <div class="formula-graph" v-if="showGraph">
-            <h3>График:</h3>
-            <div ref="graphContainer" class="graph-container"></div>
           </div>
         </div>
       </div>
@@ -105,16 +130,23 @@ export default {
       editableFormula: '',
       editing: false,
       variables: {},
+      calculationResult: null,
+      graphRange: {
+        xmin: -10,
+        xmax: 10,
+        step: 0.5
+      },
       formulaSymbols: [
-        'α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν',
-        'ξ', 'π', 'ρ', 'σ', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω',
-        'Δ', 'Σ', 'Π', '∫', '∂', '√', '±', '≠', '≈', '≤', '≥', '∞',
-        'x', 'y', 'z', 'a', 'b', 'c', '^', '_', '\\frac', '\\sqrt'
+        'x', 'y', 'z', 'a', 'b', 'c', 't',
+        'α', 'β', 'γ', 'δ', 'ε', 'θ', 'λ', 'π', 'σ', 'φ', 'ω',
+        'Δ', 'Σ', '∫', '∂', '√', '±', '≠', '≈', '≤', '≥', '∞',
+        '^', '_', '(', ')', '[', ']', '{', '}',
+        '+', '-', '*', '/', '=',
+        '\\frac', '\\sqrt', '\\sin', '\\cos', '\\tan', '\\log', '\\ln'
       ]
     };
   },
   computed: {
-
     renderedContent() {
       return marked(this.lab.content || '');
     },
@@ -124,19 +156,20 @@ export default {
           throwOnError: false
         });
       } catch (e) {
-        return `<span class="formula-error">${this.lab.formule}</span>`;
+        return `<span class="formula-error">Ошибка в формуле: ${e.message}</span>`;
       }
     },
     hasVariables() {
       return Object.keys(this.variables).length > 0;
     },
     showGraph() {
-      return this.hasVariables && this.editableFormula.includes('x');
+      return this.hasVariables && this.lab.formule.includes('x');
     }
   },
   watch: {
     editableFormula(newVal) {
       this.extractVariables(newVal);
+      this.calculateResult();
     }
   },
   created() {
@@ -157,6 +190,7 @@ export default {
         this.editableContent = this.lab.content || '';
         this.editableFormula = this.lab.formule || '';
         this.extractVariables(this.editableFormula);
+        this.calculateResult();
       } catch (err) {
         this.error = `Ошибка загрузки лабораторной работы: ${err.message}`;
       } finally {
@@ -169,17 +203,13 @@ export default {
         this.cancelEdit();
       }
     },
-    startEditing() {
-      this.editing = true;
-    },
     cancelEdit() {
-      this.editing = false;
       this.editableContent = this.lab.content || '';
       this.editableFormula = this.lab.formule || '';
+      this.extractVariables(this.editableFormula);
     },
     async saveContent() {
       try {
-        // Здесь должна быть логика сохранения через API
         await axios.put(`http://localhost:3344/labs/${this.$route.params.id}`, {
           content: this.editableContent
         }, {
@@ -188,14 +218,12 @@ export default {
           }
         });
         this.lab.content = this.editableContent;
-        this.editing = false;
       } catch (err) {
         alert(`Ошибка сохранения: ${err.message}`);
       }
     },
     async saveFormula() {
       try {
-        // Здесь должна быть логика сохранения формулы через API
         await axios.put(`http://localhost:3344/labs/${this.$route.params.id}`, {
           formule: this.editableFormula
         }, {
@@ -204,55 +232,100 @@ export default {
           }
         });
         this.lab.formule = this.editableFormula;
+        this.extractVariables(this.editableFormula);
+        this.calculateResult();
       } catch (err) {
         alert(`Ошибка сохранения формулы: ${err.message}`);
       }
     },
     updatePreview() {
-      // Автоматическое обновление предпросмотра через computed свойства
+      // Автоматическое обновление через computed свойства
     },
     insertSymbol(symbol) {
-      this.editableFormula += symbol;
-      this.updatePreview();
+      const textarea = this.$el.querySelector('.formula-edit textarea');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      this.editableFormula = this.editableFormula.substring(0, start) +
+          symbol +
+          this.editableFormula.substring(end);
+
+      // Устанавливаем курсор после вставленного символа
+      this.$nextTick(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + symbol.length;
+        textarea.focus();
+      });
     },
     extractVariables(formula) {
-      // Извлекаем переменные из формулы (простые латинские и греческие буквы)
-      const variableRegex = /[a-zA-Zα-ωΑ-Ω]+/g;
-      const matches = formula.match(variableRegex) || [];
+      // Извлекаем переменные из формулы (исключая функции и константы)
+      try {
+        const node = math.parse(formula);
+        const vars = {};
 
-      // Фильтруем только переменные (исключаем специальные команды LaTeX)
-      const filtered = matches.filter(v =>
-          !['frac', 'sqrt', 'partial', 'int'].includes(v.toLowerCase())
-      );
+        node.traverse(function(node) {
+          if (node.isSymbolNode && !Object.prototype.hasOwnProperty.call(math, node.name)) {
+            // Исключаем стандартные функции и константы
+            if (!['sin', 'cos', 'tan', 'log', 'ln', 'sqrt', 'pi', 'e'].includes(node.name)) {
+              vars[node.name] = 1;
+            }
+          }
+        });
 
-      // Создаем объект переменных с начальным значением 1
-      const newVars = {};
-      filtered.forEach(v => {
-        newVars[v] = this.variables[v] || 1;
-      });
+        this.variables = vars;
+      } catch (e) {
+        // Если парсинг не удался, используем простой метод
+        const variableRegex = /[a-zA-Zα-ωΑ-Ω][a-zA-Zα-ωΑ-Ω0-9]*/g;
+        const matches = formula.match(variableRegex) || [];
 
-      this.variables = newVars;
+        const filtered = matches.filter(v =>
+            !['frac', 'sqrt', 'partial', 'int', 'sin', 'cos', 'tan', 'log', 'ln'].includes(v.toLowerCase())
+        );
+
+        const newVars = {};
+        filtered.forEach(v => {
+          newVars[v] = this.variables[v] || 1;
+        });
+
+        this.variables = newVars;
+      }
+
       this.updateGraph();
     },
-    updateGraph() {
-      if (!this.showGraph) return;
+    calculateResult() {
+      if (!this.hasVariables) {
+        this.calculationResult = null;
+        return;
+      }
 
-      // Простая реализация построения графика для формул с x
+      try {
+        // Создаем scope с текущими значениями переменных
+        const scope = { ...this.variables };
+
+        // Вычисляем результат
+        const result = math.evaluate(this.lab.formule, scope);
+
+        // Форматируем результат (2 знака после запятой)
+        this.calculationResult = Number.isFinite(result) ?
+            result.toFixed(4).replace(/\.?0+$/, '') :
+            result.toString();
+      } catch (e) {
+        this.calculationResult = 'Ошибка вычисления';
+        console.error('Ошибка вычисления:', e);
+      }
+    },
+    updateGraph() {
+      if (!this.showGraph || !this.$refs.graphContainer) return;
+
       try {
         const xValues = [];
         const yValues = [];
+        const scope = { ...this.variables };
 
-        for (let x = -10; x <= 10; x += 0.5) {
-          const expr = this.editableFormula
-              .replace(/x/g, `(${x})`)
-              .replace(/y/g, `(${this.variables.y || 0})`)
-              .replace(/z/g, `(${this.variables.z || 0})`)
-              .replace(/a/g, `(${this.variables.a || 1})`)
-              .replace(/b/g, `(${this.variables.b || 1})`)
-              .replace(/c/g, `(${this.variables.c || 1})`);
+        for (let x = this.graphRange.xmin; x <= this.graphRange.xmax; x += this.graphRange.step) {
+          scope.x = x;
 
           try {
-            const y = math.evaluate(expr);
+            const y = math.evaluate(this.lab.formule, scope);
             xValues.push(x);
             yValues.push(y);
           } catch (e) {
@@ -264,33 +337,21 @@ export default {
           x: xValues,
           y: yValues,
           type: 'scatter',
-          mode: 'lines'
+          mode: 'lines',
+          line: { color: '#3f51b5', width: 2 }
         };
 
         const layout = {
-          title: 'График функции',
-          xaxis: { title: 'x' },
-          yaxis: { title: 'y' }
+          title: `График: ${this.lab.formule}`,
+          xaxis: { title: 'x', range: [this.graphRange.xmin, this.graphRange.xmax] },
+          yaxis: { title: 'y', autorange: true },
+          margin: { t: 40, l: 60, r: 40, b: 60 },
+          showlegend: false
         };
 
-        Plotly.newPlot(this.$refs.graphContainer, [trace], layout);
+        Plotly.react(this.$refs.graphContainer, [trace], layout);
       } catch (e) {
         console.error('Ошибка построения графика:', e);
-      }
-    },
-    evaluateFormula() {
-      try {
-        // Подставляем значения переменных в формулу
-        let expr = this.editableFormula;
-        for (const [varName, value] of Object.entries(this.variables)) {
-          expr = expr.replace(new RegExp(varName, 'g'), value);
-        }
-
-        // Вычисляем результат
-        return math.evaluate(expr);
-      } catch (e) {
-        console.error('Ошибка вычисления формулы:', e);
-        return null;
       }
     }
   },
@@ -303,40 +364,12 @@ export default {
 </script>
 
 <style scoped>
-.formula-section {
-  margin: 20px 0;
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background: white;
-}
-
-.formula-display {
-  padding: 15px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  font-size: 1.2em;
-  overflow-x: auto;
-}
-
-.formula-edit-container {
-  margin-top: 20px;
-}
-
-.formula-edit textarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-family: monospace;
-}
 .lab-editor {
   max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
   font-family: 'Arial', sans-serif;
+  color: #333;
 }
 
 .loading, .error {
@@ -345,12 +378,16 @@ export default {
   font-size: 18px;
 }
 
+.error {
+  color: #d32f2f;
+}
+
 .edit-toggle {
   margin-bottom: 20px;
   text-align: right;
 }
 
-.edit-toggle button {
+.edit-btn {
   background: #3f51b5;
   color: white;
   padding: 8px 16px;
@@ -358,34 +395,142 @@ export default {
   border: none;
   cursor: pointer;
   transition: background 0.3s;
+  font-size: 14px;
 }
 
-.edit-toggle button:hover {
+.edit-btn:hover {
   background: #303f9f;
 }
 
 .content-section, .formula-section {
   margin-bottom: 30px;
   padding: 20px;
-  border: 1px solid #e0e0e0;
   border-radius: 8px;
   background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-h2, h3 {
-  color: #333;
+h2 {
+  color: #2c3e50;
   margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
 .formula-display {
   padding: 15px;
   margin: 15px 0;
-  background: #f5f5f5;
+  background: #f8f9fa;
   min-height: 60px;
   border-radius: 4px;
   font-size: 1.2em;
   overflow-x: auto;
+  border: 1px solid #e0e0e0;
+}
+
+.formula-controls {
+  margin-top: 20px;
+}
+
+.variables-result-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.formula-variables {
+  flex: 1;
+  min-width: 250px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.variable-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.variable-input label {
+  margin-right: 10px;
+  min-width: 30px;
+  font-weight: bold;
+  color: #555;
+}
+
+.variable-input input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 120px;
+  font-size: 14px;
+}
+
+.variable-input input:focus {
+  border-color: #3f51b5;
+  outline: none;
+}
+
+.formula-result {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e8f5e9;
+  border-radius: 6px;
+  border: 1px solid #c8e6c9;
+}
+
+.result-value {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+.formula-graph {
+  margin-top: 30px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.graph-controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.range-control {
+  display: flex;
+  align-items: center;
+}
+
+.range-control label {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.range-control input {
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.graph-container {
+  width: 100%;
+  height: 400px;
+  background: white;
+  border: 1px solid #e0e0e0;
+}
+
+.formula-edit-container {
+  margin-top: 30px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
 }
 
 .formula-edit textarea {
@@ -398,11 +543,10 @@ h2, h3 {
   font-family: 'Courier New', monospace;
   font-size: 1em;
   resize: vertical;
+  line-height: 1.5;
 }
 
 .formula-tools {
-  display: flex;
-  gap: 20px;
   margin-top: 20px;
 }
 
@@ -410,7 +554,14 @@ h2, h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  flex: 1;
+  margin-top: 10px;
+}
+
+.formula-buttons h4 {
+  width: 100%;
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #555;
 }
 
 .symbol-btn {
@@ -421,52 +572,18 @@ h2, h3 {
   cursor: pointer;
   font-family: 'Times New Roman', serif;
   transition: all 0.2s;
+  font-size: 14px;
 }
 
 .symbol-btn:hover {
   background: #d0d0d0;
-  transform: translateY(-2px);
-}
-
-.formula-variables {
-  flex: 1;
-  padding: 15px;
-  background: #f9f9f9;
-  border-radius: 4px;
-}
-
-.variable-input {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.variable-input label {
-  margin-right: 10px;
-  min-width: 30px;
-  font-weight: bold;
-}
-
-.variable-input input {
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 100px;
-}
-
-.formula-graph {
-  margin-top: 20px;
-}
-
-.graph-container {
-  width: 100%;
-  height: 400px;
+  transform: translateY(-1px);
 }
 
 .button-group {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 button {
@@ -476,6 +593,7 @@ button {
   cursor: pointer;
   font-weight: bold;
   transition: background 0.3s;
+  font-size: 14px;
 }
 
 .save-btn {
@@ -506,6 +624,7 @@ button {
   font-family: 'Arial', sans-serif;
   font-size: 1em;
   resize: vertical;
+  line-height: 1.6;
 }
 
 .view-mode {
@@ -514,5 +633,21 @@ button {
 
 .formula-error {
   color: #f44336;
+  font-family: monospace;
+}
+
+@media (max-width: 768px) {
+  .variables-result-container {
+    flex-direction: column;
+  }
+
+  .formula-variables {
+    min-width: 100%;
+  }
+
+  .graph-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 </style>
