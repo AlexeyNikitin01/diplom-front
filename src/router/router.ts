@@ -10,6 +10,7 @@ import LecturesView from "@/views/lectures/LecturesView.vue";
 import LectureView from "@/views/lectures/LectureView.vue";
 import ModelsView from "@/views/models/ModelsView.vue";
 import ModelView from "@/views/models/ModelView.vue";
+import AisView from "@/views/ais/AisView.vue";
 import AiView from "@/views/ais/AiView.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import ContactsView from "@/views/ContactsView.vue";
@@ -31,7 +32,8 @@ const routes = [
     { path: '/knowledge-base/lectures/:id', component: LectureView, meta: { requiresAuth: true } },
     { path: '/models', component: ModelsView, meta: { requiresAuth: true } },
     { path: '/models/:id', component: ModelView, meta: { requiresAuth: true } },
-    { path: '/ais', component: AiView, meta: { requiresAuth: true } },
+    { path: '/ais', component: AisView, meta: { requiresAuth: true } },
+    { path: '/ais/:id', component: AiView, meta: { requiresAuth: true } },
     { path: '/cabinet', component: CabinetVIew, meta: { requiresAuth: true } },
     { path: '/course/create', component: AddCourse, meta: { requiresAuth: false } },
     { path: '/course/:id', component: CourseView, meta: { requiresAuth: false } },
