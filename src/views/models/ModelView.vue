@@ -1,6 +1,7 @@
 <template>
   <div class="airplane-viewer">
     <div ref="canvasContainer" class="model-container"></div>
+
     <div class="legend">
       <h3>Легенда самолёта</h3>
       <ul>
@@ -10,8 +11,19 @@
         </li>
       </ul>
     </div>
+
+    <div class="description-card">
+      <h2>{{ airplane.name }}</h2>
+      <p><strong>Производитель:</strong> {{ airplane.manufacturer }}</p>
+      <p><strong>Год:</strong> {{ airplane.year }}</p>
+      <p class="airplane-description">{{ airplane.description }}</p>
+      <p class="airplane-description" v-html="airplane.lecture_description"></p>
+    </div>
+
+
   </div>
 </template>
+
 
 <script>
 import * as THREE from 'three';
@@ -26,14 +38,21 @@ export default {
       required: true,
     },
   },
-  data() {
-    return {
-      legend: [],
-    };
-  },
   async mounted() {
     await this.fetchModelData();
     this.initThreeJS();
+  },
+  data() {
+    return {
+      legend: [],
+      airplane: {
+        name: '',
+        manufacturer: '',
+        year: '',
+        description: '',
+        lecture_description: '',
+      },
+    };
   },
   methods: {
     async fetchModelData() {
@@ -43,7 +62,15 @@ export default {
             authorization: 'Bearer ' + localStorage.getItem("token")
           }
         });
-        this.legend = response.data.materials; // Легенда из материалов
+        const data = response.data;
+        this.legend = data.materials;
+        this.airplane = {
+          name: data.name,
+          manufacturer: data.manufacturer,
+          year: data.year,
+          description: data.description,
+          lecture_description: data.lecture_description,
+        };
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
       }
@@ -99,12 +126,6 @@ export default {
   flex: 1;
   background: #f0f0f0;
 }
-.legend {
-  width: 300px;
-  padding: 20px;
-  background: white;
-  border-left: 1px solid #ddd;
-}
 .color-box {
   display: inline-block;
   width: 12px;
@@ -112,4 +133,73 @@ export default {
   margin-right: 8px;
   border: 1px solid #ccc;
 }
+.airplane-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.description-card {
+  background-color: #f7f9fb;
+  border-left: 5px solid #4a90e2;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.description-card h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  color: #333;
+}
+
+.description-card p {
+  margin: 4px 0;
+  color: #555;
+}
+
+.airplane-description {
+  margin-top: 10px;
+  font-style: italic;
+  color: #666;
+}
+
+.model-container {
+  width: 100%;
+  height: 500px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.legend {
+  margin-top: 16px;
+}
+
+.legend h3 {
+  margin-bottom: 10px;
+  color: #444;
+}
+
+.legend ul {
+  list-style: none;
+  padding: 0;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.color-box {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
 </style>
