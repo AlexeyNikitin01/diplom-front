@@ -1,29 +1,32 @@
 <template>
   <div class="airplane-viewer">
+    <!-- 3D модель -->
     <div ref="canvasContainer" class="model-container"></div>
 
-    <div class="legend">
-      <h3>Легенда самолёта</h3>
-      <ul>
-        <li v-for="(material, index) in legend" :key="index">
-          <span class="color-box" :style="{ backgroundColor: material.color }"></span>
-          {{ material.name }} ({{ material.description }})
-        </li>
-      </ul>
+    <!-- Информация -->
+    <div class="airplane-info">
+      <!-- Легенда -->
+      <div class="card legend-card">
+        <h3>Легенда самолёта</h3>
+        <ul>
+          <li v-for="(material, index) in legend" :key="index">
+            <span :style="{ backgroundColor: material.color }" class="color-box"></span>
+            {{ material.name }} ({{ material.description }})
+          </li>
+        </ul>
+      </div>
+
+      <!-- Описание -->
+      <div class="card description-card">
+        <h2>{{ airplane.name }}</h2>
+        <p><strong>Производитель:</strong> {{ airplane.manufacturer }}</p>
+        <p><strong>Год:</strong> {{ airplane.year }}</p>
+        <p class="airplane-description">{{ airplane.description }}</p>
+        <div class="airplane-description" v-html="airplane.lecture_description"></div>
+      </div>
     </div>
-
-    <div class="description-card">
-      <h2>{{ airplane.name }}</h2>
-      <p><strong>Производитель:</strong> {{ airplane.manufacturer }}</p>
-      <p><strong>Год:</strong> {{ airplane.year }}</p>
-      <p class="airplane-description">{{ airplane.description }}</p>
-      <p class="airplane-description" v-html="airplane.lecture_description"></p>
-    </div>
-
-
   </div>
 </template>
-
 
 <script>
 import * as THREE from 'three';
@@ -38,10 +41,6 @@ export default {
       required: true,
     },
   },
-  async mounted() {
-    await this.fetchModelData();
-    this.initThreeJS();
-  },
   data() {
     return {
       legend: [],
@@ -53,6 +52,10 @@ export default {
         lecture_description: '',
       },
     };
+  },
+  async mounted() {
+    await this.fetchModelData();
+    this.initThreeJS();
   },
   methods: {
     async fetchModelData() {
@@ -83,14 +86,12 @@ export default {
       renderer.setSize(this.$refs.canvasContainer.clientWidth, this.$refs.canvasContainer.clientHeight);
       this.$refs.canvasContainer.appendChild(renderer.domElement);
 
-      // Освещение
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambientLight);
       const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
       directionalLight.position.set(1, 1, 1);
       scene.add(directionalLight);
 
-      // Загрузка модели (файл лежит в public/models/)
       const loader = new GLTFLoader();
       loader.load(
           `/models/airplane_${this.$route.params.id}.glb`,
@@ -120,86 +121,85 @@ export default {
 <style scoped>
 .airplane-viewer {
   display: flex;
-  height: 100vh;
-}
-.model-container {
-  flex: 1;
-  background: #f0f0f0;
-}
-.color-box {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 8px;
-  border: 1px solid #ccc;
-}
-.airplane-viewer {
-  display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   padding: 20px;
   font-family: 'Segoe UI', sans-serif;
 }
 
-.description-card {
-  background-color: #f7f9fb;
-  border-left: 5px solid #4a90e2;
-  padding: 16px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.description-card h2 {
-  margin: 0 0 8px;
-  font-size: 24px;
-  color: #333;
-}
-
-.description-card p {
-  margin: 4px 0;
-  color: #555;
-}
-
-.airplane-description {
-  margin-top: 10px;
-  font-style: italic;
-  color: #666;
-}
-
+/* Модель */
 .model-container {
   width: 100%;
-  height: 500px;
-  border: 1px solid #ddd;
+  height: 50vh;
+  border: 1px solid #ccc;
   border-radius: 8px;
   overflow: hidden;
+  background-color: #f0f0f0;
 }
 
-.legend {
-  margin-top: 16px;
+/* Блок с описанием и легендой */
+.airplane-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.legend h3 {
-  margin-bottom: 10px;
-  color: #444;
+/* Общие стили карточек */
+.card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
-.legend ul {
+/* Легенда */
+.legend-card h3 {
+  margin-bottom: 16px;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.legend-card ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.legend li {
+.legend-card li {
   display: flex;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  background-color: #f9f9f9;
+  padding: 6px 10px;
+  border-radius: 4px;
 }
 
 .color-box {
   width: 16px;
   height: 16px;
-  margin-right: 8px;
+  margin-right: 10px;
   border: 1px solid #ccc;
   border-radius: 3px;
 }
 
+/* Описание */
+.description-card h2 {
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 24px;
+  text-align: center;
+}
+
+.description-card p {
+  margin: 6px 0;
+  color: #444;
+}
+
+.airplane-description {
+  margin-top: 12px;
+  line-height: 1.6;
+  color: #666;
+}
 </style>
